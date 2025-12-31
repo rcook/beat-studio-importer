@@ -1,0 +1,13 @@
+{
+  "files.eol": "\n",
+  "files.exclude": {
+    "**/.vscode/": true,
+    "**/__pycache__/": true,
+    "**/*.egg-info/": true,
+    "**/*.pyc": true,
+    "**/.mypy_cache/": true,
+    "**/build/": true,
+  },
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.typeCheckingMode": "off",
+}

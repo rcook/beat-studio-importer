@@ -1,0 +1,17 @@
+[project]
+dependencies = [
+  "colorama",
+  "mido",
+  "pyyaml",
+]
+dynamic = ["version"]
+name = "beat-studio-importer"
+
+[project.optional-dependencies]
+dev = [
+  "basedpyright",
+  "mypy",
+  "pytest",
+  "types-colorama",
+  "types-pyyaml",
+]
