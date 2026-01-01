@@ -1,17 +1,17 @@
 # pyright: reportAttributeAccessIssue=false
 
+from beat_studio_importer.descriptor import Descriptor
 from beat_studio_importer.note import Note, Velocity
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.region_builder import RegionBuilder, Tick
 from beat_studio_importer.time_signature import TimeSignature
+from beat_studio_importer.util import midi_tempo_to_qpm
 from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import cached_property
 from mido import MidiFile, MidiTrack
 from mido.messages import BaseMessage
 from typing import cast
-
-from beat_studio_importer.util import midi_tempo_to_qpm
 
 
 @dataclass(frozen=True)
@@ -24,7 +24,7 @@ class Region:
     notes: list[tuple[Tick, Note]]
 
     @staticmethod
-    def from_midi_messages(f: MidiFile, track: MidiTrack, metadata_track: MidiTrack, note_name_map: NoteNameMap) -> "list[Region]":
+    def from_midi_messages(f: MidiFile, note_track: MidiTrack, metadata_track: MidiTrack, note_name_map: NoteNameMap) -> "list[Region]":
         def make_region(builder: RegionBuilder) -> Region:
             start_tick = builder.start_tick
 
@@ -55,7 +55,7 @@ class Region:
         i = iter(builders)
         builder = next(i)
         tick = 0
-        for m in cast(Iterable[BaseMessage], track):
+        for m in cast(Iterable[BaseMessage], note_track):
             delta = cast(int, m.time)
             tick += delta
             if cast(str, m.type) != "note_on":
@@ -85,10 +85,12 @@ class Region:
         return [make_region(builder) for builder in builders]
 
     @cached_property
-    def descriptor(self) -> str:
+    def descriptor(self) -> Descriptor:
         qpm = midi_tempo_to_qpm(self.tempo)
         bpm = self.time_signature.tempo_to_bpm(self.tempo)
-        return f"{qpm}qpm {bpm}bpm, {self.time_signature}, {self.bars} bars, {self.start_tick}-{self.end_tick}"
+        return Descriptor(
+            name=None,
+            description=f"{self.start_tick}-{self.end_tick}: {qpm}qpm, {bpm}bpm, {self.time_signature}, {self.bars} bars")
 
     @cached_property
     def ticks(self) -> int:

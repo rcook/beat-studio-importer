@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import cast
 
 
-def do_import(path: Path, track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None, region_id: int | None, quantize: NoteValue, name: str | None) -> None:
+def do_import(path: Path, note_track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None, region_id: int | None, quantize: NoteValue, name: str | None) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
@@ -17,17 +17,17 @@ def do_import(path: Path, track_name: str | None, metadata_track_name: str | Non
     p = cast(Path | None, f.filename)
     assert isinstance(p, Path)
     tracks = cast(list[MidiTrack], f.tracks)
-    track, metadata_track = select_tracks(
+    note_track, metadata_track = select_tracks(
         p,
         tracks,
-        track_name,
+        note_track_name,
         metadata_track_name)
 
     note_name_map = note_name_map or DEFAULT_NOTE_NAME_MAP
 
     regions = Region.from_midi_messages(
         f,
-        track,
+        note_track,
         metadata_track,
         note_name_map)
 

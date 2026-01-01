@@ -1,52 +1,57 @@
+from beat_studio_importer.descriptor import HasDescriptor
 from beat_studio_importer.region import Region
+from beat_studio_importer.track_summary import TrackSummary
 from beat_studio_importer.user_error import UserError
-from collections.abc import Callable
 from colorama import Fore, Style
 from mido import MidiTrack
 from pathlib import Path
-from typing import cast
 
 
-def select_tracks(path: Path, tracks: list[MidiTrack], track_name: str | None, metadata_track_name: str | None) -> tuple[MidiTrack, MidiTrack]:
-    track = select_single_track(path, tracks, "track", track_name)
-    metadata_track = select_single_track(
+def select_tracks(path: Path, tracks: list[MidiTrack], note_track_name: str | None, metadata_track_name: str | None) -> tuple[MidiTrack, MidiTrack]:
+    track_summaries = [TrackSummary.summarize(t) for t in tracks]
+    note_track_summary = select_track(
         path,
-        tracks,
+        track_summaries,
+        "note track",
+        note_track_name)
+    metadata_track_summary = select_track(
+        path,
+        track_summaries,
         "metadata track",
         metadata_track_name)
-    return track, metadata_track
+    return note_track_summary.track, metadata_track_summary.track
 
 
-def select_track_interactive(path: Path, tracks: list[MidiTrack], prompt: str) -> MidiTrack:
-    return select_interactive(path, tracks, "tracks", prompt, lambda t: cast(str, t.name))
+def select_track_interactive(path: Path, track_summaries: list[TrackSummary], prompt: str) -> TrackSummary:
+    return select_interactive(path, track_summaries, "tracks", prompt)
 
 
-def get_track_by_name_or_index(tracks: list[MidiTrack], track_name_or_id: str) -> MidiTrack:
-    track = next(
-        filter(lambda t: cast(str, t.name) == track_name_or_id, tracks),
+def get_track_by_name_or_index(track_summaries: list[TrackSummary], track_name_or_id: str) -> TrackSummary:
+    track_summary = next(
+        filter(lambda t: t.name == track_name_or_id, track_summaries),
         None)
-    if track is not None:
-        return track
+    if track_summary is not None:
+        return track_summary
 
     try:
         track_id = int(track_name_or_id)
     except ValueError:
         raise UserError(f"No track with name or ID {track_name_or_id}")
 
-    if track_id < 1 or track_id > len(tracks):
+    if track_id < 1 or track_id > len(track_summaries):
         raise UserError(f"No track with name or ID {track_name_or_id}")
 
-    return tracks[track_id - 1]
+    return track_summaries[track_id - 1]
 
 
-def select_single_track(path: Path, tracks: list[MidiTrack], prompt: str, name: str | None) -> MidiTrack:
+def select_track(path: Path, track_summaries: list[TrackSummary], prompt: str, name: str | None) -> TrackSummary:
     if name is None:
-        match len(tracks):
+        match len(track_summaries):
             case 0: raise UserError(f"No tracks in {path}")
-            case 1: return tracks[0]
-            case _: return select_track_interactive(path, tracks, prompt)
+            case 1: return track_summaries[0]
+            case _: return select_track_interactive(path, track_summaries, prompt)
     else:
-        return get_track_by_name_or_index(tracks, name)
+        return get_track_by_name_or_index(track_summaries, name)
 
 
 def select_region(path: Path, regions: list[Region], region_id: int | None) -> Region:
@@ -62,7 +67,7 @@ def select_region(path: Path, regions: list[Region], region_id: int | None) -> R
 
 
 def select_region_interactive(path: Path, regions: list[Region]) -> Region:
-    return select_interactive(path, regions, "regions", "region", descriptor=lambda r: r.descriptor)
+    return select_interactive(path, regions, "regions", "region")
 
 
 def get_index(prompt: str, max: int) -> int:
@@ -81,7 +86,7 @@ def get_index(prompt: str, max: int) -> int:
             return idx - 1
 
 
-def select_interactive[T](path: Path, items: list[T], description: str, prompt: str, descriptor: Callable[[T], str]) -> T:
+def select_interactive[T: HasDescriptor](path: Path, items: list[T], description: str, prompt: str) -> T:
     count = len(items)
     assert count > 0
 
@@ -92,12 +97,24 @@ def select_interactive[T](path: Path, items: list[T], description: str, prompt: 
         Style.RESET_ALL,
         sep="")
     for i, region in enumerate(items, 1):
-        s = descriptor(region)
+        descriptor = region.descriptor
+        if descriptor.name is None:
+            d = [descriptor.description]
+        else:
+            d = [
+                Fore.LIGHTCYAN_EX,
+                descriptor.name,
+                Fore.WHITE,
+                " (",
+                descriptor.description,
+                ")"
+            ]
+
         print(
             Fore.LIGHTYELLOW_EX,
             f"({i}) ",
             Fore.LIGHTCYAN_EX,
-            s,
+            *d,
             Style.RESET_ALL,
             sep="")
 

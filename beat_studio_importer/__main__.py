@@ -27,7 +27,7 @@ def do_import_args(args: Namespace) -> None:
 
     do_import(
         path=args.path,
-        track_name=track_name,
+        note_track_name=track_name,
         metadata_track_name=metadata_track_name,
         note_name_map=note_map,
         region_id=args.region,
