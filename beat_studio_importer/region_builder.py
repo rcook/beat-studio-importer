@@ -76,10 +76,6 @@ class RegionBuilder:
                 ticks = region.end_tick - region.start_tick
                 ticks_per_bar = current_time_signature.ticks_per_bar(
                     f.ticks_per_beat)
-                if current_time_signature.numerator == 5:
-                    assert ticks_per_bar == 2400
-                else:
-                    assert False
                 bars, r = divmod(ticks, ticks_per_bar)
                 if r != 0:
                     raise RuntimeError("Region is not whole number of bars")
