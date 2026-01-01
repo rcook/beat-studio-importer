@@ -43,7 +43,7 @@ class Grid:
             assert r == 0
             _, note_name, = note.name.value
             hits = all_hits[note_name]
-            hits[step] = 100
+            hits[step] = note.velocity
 
         return cls(
             quantize=quantize,
