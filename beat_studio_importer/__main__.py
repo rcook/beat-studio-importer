@@ -88,8 +88,8 @@ def main(cwd: Path, argv: list[str]) -> None:
         dest="quantize",
         metavar="QUANTIZE",
         type=int,
-        choices=[4, 8, 16, 32, 64],
-        required=True,
+        choices=sorted(member.value for member in NoteValue),
+        default=NoteValue.SIXTEENTH.value,
         help="quantize step (4=quarter note, 8=eighth etc.)")
     _ = p.add_argument(
         "--name",
