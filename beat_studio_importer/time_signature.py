@@ -39,11 +39,11 @@ class TimeSignature:
     def __repr__(self) -> str:
         return f"{self.numerator}/{self.denominator.value}"
 
-    def ticks_per_bar(self, ppqn: int) -> int:
-        n = 4 * ppqn * self.numerator
+    def ticks_per_bar(self, ticks_per_beat: int) -> int:
+        n = 4 * ticks_per_beat * self.numerator
         q, r = divmod(n, self.denominator.value)
         if r != 0:
-            raise ValueError(f"Invalid PPQN {ppqn}")
+            raise ValueError(f"Invalid PPQN {ticks_per_beat}")
         return q
 
     def tempo_to_bpm(self, tempo: int) -> float | int:

@@ -4,7 +4,7 @@ from beat_studio_importer.note import Note
 from beat_studio_importer.time_signature import DEFAULT_TIME_SIGNATURE, TimeSignature
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from mido import MetaMessage, MidiFile, MidiTrack
+from mido import MetaMessage, MidiTrack
 from mido.messages import BaseMessage
 from typing import cast
 
@@ -25,7 +25,7 @@ class RegionBuilder:
     notes: list[tuple[Tick, Note]] = field(default_factory=list)
 
     @staticmethod
-    def from_midi_messages(f: MidiFile, metadata_track: MidiTrack) -> "list[RegionBuilder]":
+    def from_midi_messages(metadata_track: MidiTrack, ticks_per_beat: int) -> "list[RegionBuilder]":
         tick = 0
         regions: list[RegionBuilder] = []
 
@@ -75,7 +75,7 @@ class RegionBuilder:
             if region.end_tick is not None:
                 ticks = region.end_tick - region.start_tick
                 ticks_per_bar = current_time_signature.ticks_per_bar(
-                    f.ticks_per_beat)
+                    ticks_per_beat)
                 bars, r = divmod(ticks, ticks_per_bar)
                 if r != 0:
                     raise RuntimeError("Region is not whole number of bars")

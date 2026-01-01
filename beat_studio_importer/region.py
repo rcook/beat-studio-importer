@@ -1,15 +1,18 @@
 # pyright: reportAttributeAccessIssue=false
 
+from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.descriptor import Descriptor
+from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
 from beat_studio_importer.note import Note, Velocity
 from beat_studio_importer.note_name_map import NoteNameMap
+from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region_builder import RegionBuilder, Tick
 from beat_studio_importer.time_signature import TimeSignature
 from beat_studio_importer.util import midi_tempo_to_qpm
 from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import cached_property
-from mido import MidiFile, MidiTrack
+from mido import MidiTrack
 from mido.messages import BaseMessage
 from typing import cast
 
@@ -17,15 +20,16 @@ from typing import cast
 @dataclass(frozen=True)
 class Region:
     region_id: int
+    ticks_per_beat: int
     start_tick: Tick
     end_tick: Tick
     bars: int
-    tempo: int  # microseconds per quarter note
+    tempo: int
     time_signature: TimeSignature
     notes: list[tuple[Tick, Note]]
 
     @staticmethod
-    def from_midi_messages(f: MidiFile, note_track: MidiTrack, metadata_track: MidiTrack, note_name_map: NoteNameMap) -> "list[Region]":
+    def from_midi_messages(note_track: MidiTrack, metadata_track: MidiTrack, note_name_map: NoteNameMap, ticks_per_beat: int) -> "list[Region]":
         def make_region(builder: RegionBuilder, region_id: int) -> Region:
             start_tick = builder.start_tick
 
@@ -43,6 +47,7 @@ class Region:
 
             return Region(
                 region_id=region_id,
+                ticks_per_beat=ticks_per_beat,
                 start_tick=start_tick,
                 end_tick=end_tick,
                 bars=bars,
@@ -51,7 +56,9 @@ class Region:
                 notes=builder.notes)
 
         # Compute regions based on time signature and tempo changes
-        builders = RegionBuilder.from_midi_messages(f, metadata_track)
+        builders = RegionBuilder.from_midi_messages(
+            metadata_track,
+            ticks_per_beat)
 
         # Add notes to regions
         i = iter(builders)
@@ -77,7 +84,7 @@ class Region:
         assert builder.time_signature is not None
 
         temp = builder.notes[-1][0]
-        ticks_per_bar = builder.time_signature.ticks_per_bar(f.ticks_per_beat)
+        ticks_per_bar = builder.time_signature.ticks_per_bar(ticks_per_beat)
         bars, r = divmod(temp, ticks_per_bar)
         if r > 0:
             bars += 1
@@ -97,3 +104,30 @@ class Region:
     @cached_property
     def ticks(self) -> int:
         return self.end_tick - self.start_tick
+
+    def render(self, name: str, quantize: NoteValue) -> BeatStudioPattern:
+        ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value)
+        assert r == 0
+
+        steps, r = divmod(self.ticks, ticks_per_step)
+        assert r == 0
+
+        all_hits: Hits = {
+            member: [None] * steps
+            for member in BeatStudioNoteName
+        }
+
+        for (tick, note) in self.notes:
+            step, r = divmod(tick, ticks_per_step)
+            assert r == 0
+            _, note_name, = note.name.value
+            hits = all_hits[note_name]
+            hits[step] = note.velocity
+
+        return BeatStudioPattern(
+            name=name,
+            tempo=self.tempo,
+            time_signature=self.time_signature,
+            quantize=quantize,
+            steps=steps,
+            hits=all_hits)
