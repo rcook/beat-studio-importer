@@ -1,6 +1,7 @@
 name: General MIDI Drums
 notes:
   35: acoustic_bass_drum
+  36: bass_drum_1
   38: acoustic_snare
   42: closed_hi_hat
   47: low_mid_tom
