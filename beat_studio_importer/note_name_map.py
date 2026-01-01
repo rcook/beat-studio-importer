@@ -40,12 +40,5 @@ class NoteNameMap:
             }, stream=f)
 
 
-DEFAULT_NOTE_NAME_MAP: NoteNameMap = NoteNameMap(
-    name="General MIDI Drums",
-    notes={
-        36: NoteName.RIGHT_KICK_HIT,
-        38: NoteName.SNARE_HIT,
-        42: NoteName.HI_HAT_CLOSED,
-        47: NoteName.MID_TOM_HIT,
-        48: NoteName.HIGH_TOM_HIT
-    })
+DEFAULT_NOTE_NAME_MAP: NoteNameMap = NoteNameMap.load(
+    Path(__file__).parent.parent / "note-maps/general-midi-drums.notemap")

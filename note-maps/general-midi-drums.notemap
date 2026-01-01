@@ -1,7 +1,7 @@
 name: General MIDI Drums
 notes:
-  36: right_kick_hit
-  38: snare_hit
-  42: hi_hat_closed
-  47: mid_tom_hit
-  48: high_tom_hit
+  35: acoustic_bass_drum
+  38: acoustic_snare
+  42: closed_hi_hat
+  47: low_mid_tom
+  48: hi_mid_tom
