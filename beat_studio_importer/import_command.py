@@ -33,6 +33,6 @@ def do_import(path: Path, note_track_name: str | None, metadata_track_name: str 
 
     region = select_region(p, regions, region_id)
 
-    name = name or f"{p.stem} region {region_id}"
+    name = name or f"{p.stem} region {region.region_id}"
     grid = Grid.make(f, quantize, region)
     grid.print(name)

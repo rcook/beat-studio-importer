@@ -16,6 +16,7 @@ from typing import cast
 
 @dataclass(frozen=True)
 class Region:
+    region_id: int
     start_tick: Tick
     end_tick: Tick
     bars: int
@@ -25,7 +26,7 @@ class Region:
 
     @staticmethod
     def from_midi_messages(f: MidiFile, note_track: MidiTrack, metadata_track: MidiTrack, note_name_map: NoteNameMap) -> "list[Region]":
-        def make_region(builder: RegionBuilder) -> Region:
+        def make_region(builder: RegionBuilder, region_id: int) -> Region:
             start_tick = builder.start_tick
 
             end_tick = builder.end_tick
@@ -41,6 +42,7 @@ class Region:
             assert time_signature is not None
 
             return Region(
+                region_id=region_id,
                 start_tick=start_tick,
                 end_tick=end_tick,
                 bars=bars,
@@ -82,7 +84,7 @@ class Region:
         builder.end_tick = builder.start_tick + bars * ticks_per_bar
         builder.bars = bars
 
-        return [make_region(builder) for builder in builders]
+        return [make_region(builder, region_id) for region_id, builder in enumerate(builders, 1)]
 
     @cached_property
     def descriptor(self) -> Descriptor:
