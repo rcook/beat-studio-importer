@@ -20,29 +20,21 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.note import MidiVelocity
-from beat_studio_importer.scaling import downscale
-from enum import IntEnum, unique
+from beat_studio_importer.midi_types import MidiVelocity
+from beat_studio_importer.open_interval import OpenInterval
+from typing import Self
 
 
-@unique
-class BeatStudioVelocity(IntEnum):
-    LEVEL_0 = 0
-    LEVEL_1 = 1
-    LEVEL_2 = 2
-    LEVEL_3 = 3
-    LEVEL_4 = 4
-    LEVEL_5 = 5
-    LEVEL_6 = 6
-    LEVEL_7 = 7
-    LEVEL_8 = 8
-    LEVEL_9 = 9
+MIDI_VELOCITY_RANGE: OpenInterval = OpenInterval(0, 127)
+BEAT_STUDIO_VELOCITY_RANGE: OpenInterval = OpenInterval(1, 9)
 
-    @staticmethod
-    def from_int(value: int) -> "BeatStudioVelocity":
-        return BeatStudioVelocity(value)
 
-    @staticmethod
-    def from_midi(velocity: MidiVelocity) -> "BeatStudioVelocity":
-        value = downscale(velocity, range(0, 128), range(0, 10))
-        return BeatStudioVelocity.from_int(value)
+class BeatStudioVelocity(int):
+    def __new__(cls: type[Self], value: int) -> Self:
+        if value not in BEAT_STUDIO_VELOCITY_RANGE:
+            raise ValueError(f"Invalid Beat Studio velocity {value}")
+        return super().__new__(cls, value)
+
+    @classmethod
+    def from_midi_velocity(cls: type[Self], value: MidiVelocity) -> Self:
+        return cls(MIDI_VELOCITY_RANGE.downscale(BEAT_STUDIO_VELOCITY_RANGE, value))

@@ -21,9 +21,10 @@
 #
 
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
+from beat_studio_importer.midi_types import MidiVelocity
 
 
 class TestBeatStudioVelocity:
     def test_basics(self) -> None:
-        assert BeatStudioVelocity.from_midi(0) is BeatStudioVelocity.LEVEL_0
-        assert BeatStudioVelocity.from_midi(127) is BeatStudioVelocity.LEVEL_9
+        assert BeatStudioVelocity.from_midi_velocity(MidiVelocity(0)) == 1
+        assert BeatStudioVelocity.from_midi_velocity(MidiVelocity(127)) == 9

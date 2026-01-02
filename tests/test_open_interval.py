@@ -20,13 +20,14 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.scaling import downscale
+from beat_studio_importer.open_interval import OpenInterval
 
 
 class TestDownscale:
     def test_basics(self) -> None:
         def call_downscale(value: int) -> int:
-            return downscale(value, range(0, 30), range(0, 10))
+            source = OpenInterval(0, 29)
+            return source.downscale(OpenInterval(0, 9), value)
 
         assert call_downscale(0) == 0
         assert call_downscale(1) == 0

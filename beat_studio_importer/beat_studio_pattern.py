@@ -94,10 +94,7 @@ class BeatStudioPattern:
     @classmethod
     def read(cls: type[T], header: str, lines: list[str]) -> T:
         def translate_hit_char(c: str) -> BeatStudioVelocity | None:
-            if c == ".":
-                return None
-            else:
-                return BeatStudioVelocity.from_int(int(c))
+            return None if c == "." else BeatStudioVelocity(int(c))
 
         if not header.startswith("[\"") or not header.endswith("]"):
             raise ValueError(f"Invalid header {header}")
@@ -164,7 +161,7 @@ class BeatStudioPattern:
 
     @staticmethod
     def _velocity_char(velocity: BeatStudioVelocity | None) -> str:
-        return "." if velocity is None else str(velocity.value)
+        return "." if velocity is None else str(velocity)
 
     def _make_header(self) -> str:
         if not all(map(lambda c: c.isprintable(), self.name)):

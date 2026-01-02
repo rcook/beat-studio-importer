@@ -20,23 +20,36 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-def is_valid_scale(range: range) -> bool:
-    return range.stop >= range.start and range.step == 1
+class OpenInterval:
+    def __init__(self, min: int, max: int) -> None:
+        if min > max:
+            raise ValueError(f"Invalid min {min} or {max}")
 
+        self._min: int = min
+        self._max: int = max
 
-def downscale(value: int, source: range, target: range) -> int:
-    if not is_valid_scale(source):
-        raise ValueError(f"Invalid source range {source}")
-    if not is_valid_scale(target):
-        raise ValueError(f"Invalid target range {target}")
+    @property
+    def min(self): return self._min
 
-    if value not in source:
-        raise ValueError(f"Value {value} is outside source range {source}")
+    @property
+    def max(self): return self._max
 
-    source_size = source.stop - source.start - 1
-    target_size = target.stop - target.start - 1
+    def __len__(self) -> int:
+        return self._max - self._min
 
-    scaled_value = ((value - source.start) / source_size) * \
-        target_size + target.start
+    def __contains__(self, value: int) -> bool:
+        return self.min <= value <= self.max
 
-    return int(round(scaled_value))
+    def downscale(self, other: "OpenInterval", value: int) -> int:
+        if value not in self:
+            raise ValueError(
+                f"Value {value} is not in open interval {self}")
+
+        self_size = len(self)
+        other_size = len(other)
+        if self_size == 0 or other_size == 0:
+            raise ValueError(f"Source and target intervals must be non-empty")
+
+        scaled_value = ((value - self.min) / self_size) \
+            * other_size + other.min
+        return int(round(scaled_value))
