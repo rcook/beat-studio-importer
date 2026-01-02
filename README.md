@@ -13,7 +13,8 @@ python \
     --track 2 \
     --metadata-track 1 \
     --region 2 \
-    --quantize 16
+    --quantize 16 \
+    --add
 ```
 
 Will produce output in the following format:
@@ -31,6 +32,9 @@ OPEN-HIHAT: ............................
 RIDE      : ............................
 SNARE     : ....5.............5...55....
 ```
+
+It will also add this pattern to your `%LOCALAPPDATA%\Beat Studio\patterns.beat`
+file if it is not already present.
 
 ## Caveat emptor
 
