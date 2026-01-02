@@ -120,7 +120,7 @@ class Region:
         return self.time_signature.basis.midi_tempo_to_bpm(self.tempo)
 
     def render(self, name: str, quantize: NoteValue) -> BeatStudioPattern:
-        ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value)
+        ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value[0])
         assert r == 0
 
         steps, r = divmod(self.ticks, ticks_per_step)

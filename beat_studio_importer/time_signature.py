@@ -9,16 +9,6 @@ from mido import MetaMessage
 from typing import TypeVar, cast, override
 
 
-# Music theory? How do I systematically determine the standard basis from a time signature?
-STANDARD_BASES: dict[tuple[int, NoteValue], Basis] = {
-    (3, NoteValue.QUARTER): Basis.QUARTER,
-    (4, NoteValue.QUARTER): Basis.QUARTER,
-    (5, NoteValue.QUARTER): Basis.QUARTER,
-    (7, NoteValue.EIGHTH): Basis.EIGHTH,
-    (12, NoteValue.EIGHTH): Basis.DOTTED_QUARTER
-}
-
-
 DEFAULT_CLOCKS_PER_CLICK: int = 24
 DEFAULT_NOTATED_32ND_NOTES_PER_BEAT: int = 8
 
@@ -63,15 +53,28 @@ class TimeSignature:
 
     @override
     def __repr__(self) -> str:
-        return f"{self.numerator}/{self.denominator.value}"
+        return f"{self.numerator}/{self.denominator.value[0]}"
 
+    # Reference: https://en.wikipedia.org/wiki/Time_signature
     @cached_property
     def basis(self) -> Basis:
-        return STANDARD_BASES[(self.numerator, self.denominator)]
+        is_simple_metre = self.numerator in [1, 2, 3, 4]
+        if is_simple_metre:
+            return self.denominator.value[1]
+
+        is_compound_metre = self.numerator % 3 == 0
+        if is_compound_metre:
+            match self.denominator:
+                case NoteValue.EIGHTH: return Basis.DOTTED_QUARTER
+                case NoteValue.SIXTEENTH: return Basis.DOTTED_EIGHTH
+                case _: raise NotImplementedError(f"Unimplemented time signature {self}")
+
+        # Complex metre
+        return self.denominator.value[1]
 
     def ticks_per_bar(self, ticks_per_beat: int) -> int:
         n = 4 * ticks_per_beat * self.numerator
-        q, r = divmod(n, self.denominator.value)
+        q, r = divmod(n, self.denominator.value[0])
         if r != 0:
             raise ValueError(f"Invalid PPQN {ticks_per_beat}")
         return q

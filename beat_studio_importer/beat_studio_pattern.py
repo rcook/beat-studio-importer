@@ -48,4 +48,4 @@ class BeatStudioPattern:
         qpm = round(midi_tempo_to_qpm(self.tempo)) \
             if override_tempo is None \
             else override_tempo
-        return f"[\"{encoded_name}\" - {self.steps} - {qpm} - {self.quantize.value} - {self.time_signature}]"
+        return f"[\"{encoded_name}\" - {self.steps} - {qpm} - {self.quantize.value[0]} - {self.time_signature}]"
