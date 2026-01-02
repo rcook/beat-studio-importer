@@ -21,7 +21,7 @@
 #
 
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
-from beat_studio_importer.beat_studio_util import default_patterns_beat_path
+from beat_studio_importer.beat_studio_util import default_beat_studio_profile
 from beat_studio_importer.features import NEW_TIMELINE_FEATURE_ENABLED
 from beat_studio_importer.import_ui import select_region, select_tracks
 from beat_studio_importer.midi_source import MidiSource
@@ -81,8 +81,15 @@ def do_import(path: Path, note_track_name: str | None, metadata_track_name: str 
     print(Style.RESET_ALL)
 
     if add:
-        patterns_beat_path = default_patterns_beat_path()
-        if is_existing_pattern(patterns_beat_path, pattern):
+        profile = default_beat_studio_profile()
+        if profile is None:
+            raise UserError("Cannot find Beat Studio profile")
+
+        patterns_path = profile[1]
+        if patterns_path is None:
+            raise UserError("Cannot find Beat Studio patterns file")
+
+        if is_existing_pattern(patterns_path, pattern):
             print(
                 Fore.WHITE,
                 "Pattern ",
@@ -91,11 +98,11 @@ def do_import(path: Path, note_track_name: str | None, metadata_track_name: str 
                 Fore.WHITE,
                 " is already defined in ",
                 Fore.LIGHTCYAN_EX,
-                patterns_beat_path,
+                patterns_path,
                 Style.RESET_ALL,
                 sep="")
         else:
-            with patterns_beat_path.open("at") as f:
+            with patterns_path.open("at") as f:
                 pattern.print(file=f)
             print(
                 Fore.WHITE,
@@ -105,13 +112,13 @@ def do_import(path: Path, note_track_name: str | None, metadata_track_name: str 
                 Fore.WHITE,
                 " added to ",
                 Fore.LIGHTCYAN_EX,
-                patterns_beat_path,
+                patterns_path,
                 Style.RESET_ALL,
                 sep="")
 
 
-def is_existing_pattern(patterns_beat_path: Path, pattern: BeatStudioPattern) -> bool:
-    patterns = BeatStudioPattern.load(patterns_beat_path)
+def is_existing_pattern(patterns_path: Path, pattern: BeatStudioPattern) -> bool:
+    patterns = BeatStudioPattern.load(patterns_path)
     for p in patterns:
         if pattern == p:
             return True

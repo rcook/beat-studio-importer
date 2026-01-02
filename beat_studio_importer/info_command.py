@@ -20,19 +20,41 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.beat_studio_util import default_beat_studio_profile
 from beat_studio_importer.import_ui import select_tracks
 from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.midi_util import summarize_midi_file
 from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP, NoteNameMap
 from beat_studio_importer.region import Region
 from beat_studio_importer.table import Table
-from beat_studio_importer.ui import cprint
+from beat_studio_importer.ui import cprint, print_key_value
 from beat_studio_importer.user_error import UserError
 from colorama import Fore
 from pathlib import Path
 
 
-def do_info(path: Path, note_track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None) -> None:
+def do_info(path: Path | None, note_track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None) -> None:
+    show_beat_studio_info()
+
+    if path is not None:
+        show_file_info(
+            path=path,
+            note_track_name=note_track_name,
+            metadata_track_name=metadata_track_name,
+            note_name_map=note_name_map)
+
+
+def show_beat_studio_info() -> None:
+    profile = default_beat_studio_profile()
+    if profile is None:
+        cprint(Fore.LIGHTRED_EX, "Cannot find Beat Studio profile")
+    else:
+        print_key_value("Beat Studio profile directory", profile[0])
+        if profile[1] is not None:
+            print_key_value("Beat Studio patterns file", profile[1])
+
+
+def show_file_info(path: Path, note_track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 

@@ -24,13 +24,14 @@ from os import getenv
 from pathlib import Path
 
 
-def default_patterns_beat_path() -> Path:
+def default_beat_studio_profile() -> tuple[Path, Path | None] | None:
     s = getenv("LOCALAPPDATA")
     if s is None:
-        raise RuntimeError("LOCALAPPDATA is not defined")
+        return None
 
-    path = Path(s).resolve() / "Beat Studio" / "patterns.beat"
-    if not path.is_file():
-        raise RuntimeError(f"Configuration file {path} not found")
+    profile_dir = Path(s).resolve() / "Beat Studio"
+    if not profile_dir.is_dir():
+        return None
 
-    return path
+    patterns_path = profile_dir / "patterns.beat"
+    return profile_dir, patterns_path if patterns_path.is_file() else None

@@ -80,7 +80,7 @@ def do_info_args(args: Namespace) -> None:
         else NoteNameMap.load(checked_cast(Path, args.note_name_path))
 
     do_info(
-        path=checked_cast(Path, args.path),
+        path=checked_cast(Path, args.path, optional=True),
         note_track_name=note_track_name,
         metadata_track_name=metadata_track_name,
         note_name_map=note_name_map)
@@ -90,7 +90,7 @@ def resolve_path(cwd: Path, s: str) -> Path:
     return (cwd / Path(s).expanduser()).resolve()
 
 
-def add_path_arg(parser: ArgumentParser, cwd: Path) -> None:
+def add_path_arg(parser: ArgumentParser, cwd: Path, optional: bool = False) -> None:
     def resolved_path(s: str) -> Path:
         return resolve_path(cwd, s)
 
@@ -98,6 +98,7 @@ def add_path_arg(parser: ArgumentParser, cwd: Path) -> None:
         dest="path",
         metavar="PATH",
         type=resolved_path,
+        nargs="?" if optional else None,
         help="path of file to import")
 
 
@@ -182,7 +183,7 @@ def main(cwd: Path, argv: list[str]) -> None:
 
     p = parsers.add_parser(name="info")
     p.set_defaults(func=do_info_args)
-    add_path_arg(p, cwd)
+    add_path_arg(p, cwd, optional=True)
     add_common_args(p, cwd)
 
     args = parser.parse_args(argv)
