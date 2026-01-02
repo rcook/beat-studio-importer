@@ -27,7 +27,7 @@ from fractions import Fraction
 
 
 @unique
-class Basis(Enum):
+class Pulse(Enum):
     SIXTEENTH = auto(), Fraction(1, 4), "sixteenth"
     EIGHTH = auto(), Fraction(1, 2), "eighth"
     DOTTED_EIGHTH = auto(), Fraction(3, 4), "dotted eighth"
@@ -36,7 +36,7 @@ class Basis(Enum):
     HALF = auto(), 2, "half"
     WHOLE = auto(), 4, "whole"
 
-    # Tempo as basis beats per minute
+    # Tempo as beats (pulses) per minute
     def midi_tempo_to_bpm(self, tempo: MidiTempo) -> Bpm:
         qpm = midi_tempo_to_qpm(tempo)
         multiplier = self.value[1]

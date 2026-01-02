@@ -20,9 +20,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.basis import Basis
 from beat_studio_importer.misc import Bpm, MidiTempo, Numerator
 from beat_studio_importer.note_value import NoteValue
+from beat_studio_importer.pulse import Pulse
 from dataclasses import dataclass
 from functools import cached_property
 from typing import override
@@ -39,7 +39,7 @@ class TimeSignature:
 
     # Reference: https://en.wikipedia.org/wiki/Time_signature
     @cached_property
-    def basis(self) -> Basis:
+    def pulse(self) -> Pulse:
         is_simple_metre = self.numerator in [1, 2, 3, 4]
         if is_simple_metre:
             return self.denominator.value[1]
@@ -47,8 +47,8 @@ class TimeSignature:
         is_compound_metre = self.numerator % 3 == 0
         if is_compound_metre:
             match self.denominator:
-                case NoteValue.EIGHTH: return Basis.DOTTED_QUARTER
-                case NoteValue.SIXTEENTH: return Basis.DOTTED_EIGHTH
+                case NoteValue.EIGHTH: return Pulse.DOTTED_QUARTER
+                case NoteValue.SIXTEENTH: return Pulse.DOTTED_EIGHTH
                 case _: raise NotImplementedError(f"Unimplemented time signature {self}")
 
         # Complex metre
@@ -61,6 +61,6 @@ class TimeSignature:
             raise ValueError(f"Invalid PPQN {ticks_per_beat}")
         return q
 
-    # Tempo as basis beats per minute
+    # Tempo as beats (pulses) per minute
     def midi_tempo_to_bpm(self, tempo: MidiTempo) -> Bpm:
-        return self.basis.midi_tempo_to_bpm(tempo)
+        return self.pulse.midi_tempo_to_bpm(tempo)

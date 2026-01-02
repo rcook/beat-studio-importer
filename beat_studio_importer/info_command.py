@@ -73,7 +73,7 @@ def show_file_info(path: Path) -> None:
     for region in regions:
         print()
         cprint(Fore.LIGHTYELLOW_EX, f"Region {region.id}")
-        beat = region.time_signature.basis.value[2]
+        pulse = region.time_signature.pulse.value[2]
         with Table((None, None, "{}", Fore.LIGHTBLUE_EX), (None, None, "{}", Fore.LIGHTCYAN_EX), column_sep="  ") as table:
             table.add_row("MIDI tempo", region.tempo)
             table.add_row("Time signature", region.time_signature)
@@ -81,6 +81,6 @@ def show_file_info(path: Path) -> None:
                 "QPM tempo (quarter notes per minute)",
                 f"{region.qpm:.1f}")
             table.add_row(
-                f"BPM tempo (beats per minute, beat={beat})",
+                f"BPM tempo (beats per minute, beat={pulse})",
                 f"{region.bpm:.1f}")
             table.print()

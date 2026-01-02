@@ -20,9 +20,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.basis import Basis
 from beat_studio_importer.misc import MidiTempo, Numerator
 from beat_studio_importer.note_value import NoteValue
+from beat_studio_importer.pulse import Pulse
 from beat_studio_importer.time_signature import TimeSignature
 from tests.util import is_close_tempo
 import pytest
@@ -68,28 +68,28 @@ class TestTimeSignature:
     # Reference: https://en.wikipedia.org/wiki/Time_signature
     @pytest.mark.parametrize("numerator, denominator, expected", [
         # Simple metre
-        (1, NoteValue.WHOLE, Basis.WHOLE),
-        (1, NoteValue.SIXTEENTH, Basis.SIXTEENTH),
-        (2, NoteValue.HALF, Basis.HALF),
-        (2, NoteValue.EIGHTH, Basis.EIGHTH),
-        (3, NoteValue.WHOLE, Basis.WHOLE),
-        (3, NoteValue.QUARTER, Basis.QUARTER),
+        (1, NoteValue.WHOLE, Pulse.WHOLE),
+        (1, NoteValue.SIXTEENTH, Pulse.SIXTEENTH),
+        (2, NoteValue.HALF, Pulse.HALF),
+        (2, NoteValue.EIGHTH, Pulse.EIGHTH),
+        (3, NoteValue.WHOLE, Pulse.WHOLE),
+        (3, NoteValue.QUARTER, Pulse.QUARTER),
         # Compound metre
-        (6, NoteValue.EIGHTH, Basis.DOTTED_QUARTER),
-        (9, NoteValue.EIGHTH, Basis.DOTTED_QUARTER),
-        (12, NoteValue.EIGHTH, Basis.DOTTED_QUARTER),
-        (15, NoteValue.EIGHTH, Basis.DOTTED_QUARTER),
-        (6, NoteValue.SIXTEENTH, Basis.DOTTED_EIGHTH),
-        (9, NoteValue.SIXTEENTH, Basis.DOTTED_EIGHTH),
-        (12, NoteValue.SIXTEENTH, Basis.DOTTED_EIGHTH),
-        (15, NoteValue.SIXTEENTH, Basis.DOTTED_EIGHTH),
+        (6, NoteValue.EIGHTH, Pulse.DOTTED_QUARTER),
+        (9, NoteValue.EIGHTH, Pulse.DOTTED_QUARTER),
+        (12, NoteValue.EIGHTH, Pulse.DOTTED_QUARTER),
+        (15, NoteValue.EIGHTH, Pulse.DOTTED_QUARTER),
+        (6, NoteValue.SIXTEENTH, Pulse.DOTTED_EIGHTH),
+        (9, NoteValue.SIXTEENTH, Pulse.DOTTED_EIGHTH),
+        (12, NoteValue.SIXTEENTH, Pulse.DOTTED_EIGHTH),
+        (15, NoteValue.SIXTEENTH, Pulse.DOTTED_EIGHTH),
         # Complex metre
-        (5, NoteValue.QUARTER, Basis.QUARTER),
-        (8, NoteValue.EIGHTH, Basis.EIGHTH),
-        (7, NoteValue.SIXTEENTH, Basis.SIXTEENTH)
+        (5, NoteValue.QUARTER, Pulse.QUARTER),
+        (8, NoteValue.EIGHTH, Pulse.EIGHTH),
+        (7, NoteValue.SIXTEENTH, Pulse.SIXTEENTH)
     ])
-    def test_basis(self, numerator: Numerator, denominator: NoteValue, expected: Basis) -> None:
+    def test_pulse(self, numerator: Numerator, denominator: NoteValue, expected: Pulse) -> None:
         time_signature = TimeSignature(
             numerator=numerator,
             denominator=denominator)
-        assert time_signature.basis is expected
+        assert time_signature.pulse is expected

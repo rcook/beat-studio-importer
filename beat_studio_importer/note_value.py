@@ -20,17 +20,17 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.basis import Basis
+from beat_studio_importer.pulse import Pulse
 from enum import Enum, unique
 
 
 @unique
 class NoteValue(Enum):
-    WHOLE = 1, Basis.WHOLE
-    HALF = 2, Basis.HALF
-    QUARTER = 4, Basis.QUARTER
-    EIGHTH = 8, Basis.EIGHTH
-    SIXTEENTH = 16, Basis.SIXTEENTH
+    WHOLE = 1, Pulse.WHOLE
+    HALF = 2, Pulse.HALF
+    QUARTER = 4, Pulse.QUARTER
+    EIGHTH = 8, Pulse.EIGHTH
+    SIXTEENTH = 16, Pulse.SIXTEENTH
 
     @staticmethod
     def from_int(value: int) -> "NoteValue":

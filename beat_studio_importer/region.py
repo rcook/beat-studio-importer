@@ -127,10 +127,10 @@ class Region:
     def qpm(self) -> Qpm:
         return midi_tempo_to_qpm(self.tempo)
 
-    # Tempo as basis beats per minute
+    # Tempo as beats (pulses) per minute
     @cached_property
     def bpm(self) -> Bpm:
-        return self.time_signature.basis.midi_tempo_to_bpm(self.tempo)
+        return self.time_signature.pulse.midi_tempo_to_bpm(self.tempo)
 
     def render(self, name: str, note_name_map: NoteNameMap,  quantize: NoteValue, override_tempo: int | None = None) -> BeatStudioPattern:
         ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value[0])
