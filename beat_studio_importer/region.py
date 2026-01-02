@@ -146,7 +146,7 @@ class Region:
     def bpm(self) -> float:
         return self.time_signature.basis.midi_tempo_to_bpm(self.tempo)
 
-    def render(self, name: str, quantize: NoteValue) -> BeatStudioPattern:
+    def render(self, name: str, quantize: NoteValue, override_tempo: int | None = None) -> BeatStudioPattern:
         ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value[0])
         assert r == 0
 
@@ -165,9 +165,13 @@ class Region:
             hits = all_hits[note_name]
             hits[step] = BeatStudioVelocity.from_midi(note.velocity)
 
+        qpm = round(midi_tempo_to_qpm(self.tempo)) \
+            if override_tempo is None \
+            else override_tempo
+
         return BeatStudioPattern(
             name=name,
-            tempo=self.tempo,
+            qpm=qpm,
             time_signature=self.time_signature,
             quantize=quantize,
             steps=steps,

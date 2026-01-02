@@ -20,18 +20,20 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
 from beat_studio_importer.import_ui import select_region, select_tracks
 from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP, NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region import Region
 from beat_studio_importer.ui import print_key_value
+from beat_studio_importer.util import default_patterns_beat_path
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from pathlib import Path
 
 
-def do_import(path: Path, note_track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None, region_id: int | None, quantize: NoteValue, name: str | None, override_tempo: int | None) -> None:
+def do_import(path: Path, note_track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None, region_id: int | None, quantize: NoteValue, name: str | None, override_tempo: int | None, add: bool = False) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
@@ -53,12 +55,49 @@ def do_import(path: Path, note_track_name: str | None, metadata_track_name: str 
     region = select_region(source.path, regions, region_id)
 
     name = name or f"{source.path.stem} region {region.region_id}"
-    pattern = region.render(name, quantize)
+    pattern = region.render(name, quantize, override_tempo=override_tempo)
 
     print_key_value("File", source.path)
     print_key_value("Ticks per beat", source.ticks_per_beat)
     print()
 
     print(Fore.LIGHTYELLOW_EX, end="")
-    pattern.print(override_tempo=override_tempo)
+    pattern.print()
     print(Style.RESET_ALL)
+
+    if add:
+        patterns_beat_path = default_patterns_beat_path()
+        if is_existing_pattern(patterns_beat_path, pattern):
+            print(
+                Fore.WHITE,
+                "Pattern ",
+                Fore.LIGHTBLUE_EX,
+                pattern.name,
+                Fore.WHITE,
+                " is already defined in ",
+                Fore.LIGHTCYAN_EX,
+                patterns_beat_path,
+                Style.RESET_ALL,
+                sep="")
+        else:
+            with patterns_beat_path.open("at") as f:
+                pattern.print(file=f)
+            print(
+                Fore.WHITE,
+                "Pattern ",
+                Fore.LIGHTBLUE_EX,
+                pattern.name,
+                Fore.WHITE,
+                " added to ",
+                Fore.LIGHTCYAN_EX,
+                patterns_beat_path,
+                Style.RESET_ALL,
+                sep="")
+
+
+def is_existing_pattern(patterns_beat_path: Path, pattern: BeatStudioPattern) -> bool:
+    patterns = BeatStudioPattern.load(patterns_beat_path)
+    for p in patterns:
+        if pattern == p:
+            return True
+    return False

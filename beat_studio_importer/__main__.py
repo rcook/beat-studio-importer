@@ -25,10 +25,9 @@
 # pyright: reportUnknownLambdaType=false
 # pyright: reportUnknownMemberType=false
 
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
-from beat_studio_importer.merge import do_merge
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.user_error import UserError
@@ -62,7 +61,8 @@ def do_import_args(args: Namespace) -> None:
         region_id=checked_cast(int, args.region, optional=True),
         quantize=quantize,
         name=checked_cast(str, args.name, optional=True),
-        override_tempo=checked_cast(int, args.override_tempo, optional=True))
+        override_tempo=checked_cast(int, args.override_tempo, optional=True),
+        add=checked_cast(bool, args.add))
 
 
 def do_info_args(args: Namespace) -> None:
@@ -171,14 +171,19 @@ def main(cwd: Path, argv: list[str]) -> None:
         type=int,
         default=None,
         help="override tempo in output (to work around Beat Studio tempo bug)")
+    _ = p.add_argument(
+        "--add",
+        "-a",
+        dest="add",
+        metavar="ADD",
+        action=BooleanOptionalAction,
+        default=False,
+        help="add new pattern to Beat Studio patterns.beat file")
 
     p = parsers.add_parser(name="info")
     p.set_defaults(func=do_info_args)
     add_path_arg(p, cwd)
     add_common_args(p, cwd)
-
-    p = parsers.add_parser(name="merge")
-    p.set_defaults(func=lambda _: do_merge())
 
     args = parser.parse_args(argv)
     result: object = None

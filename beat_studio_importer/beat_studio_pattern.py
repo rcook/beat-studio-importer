@@ -24,7 +24,6 @@ from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.time_signature import TimeSignature
-from beat_studio_importer.util import midi_tempo_to_qpm
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar
@@ -43,7 +42,7 @@ type Hits = dict[BeatStudioNoteName, list[BeatStudioVelocity | None]]
 @dataclass(frozen=True)
 class BeatStudioPattern:
     name: str
-    tempo: int
+    qpm: int
     time_signature: TimeSignature
     quantize: NoteValue
     steps: int
@@ -119,7 +118,7 @@ class BeatStudioPattern:
             raise ValueError(f"Invalid header {header}")
 
         steps = int(parts[0])
-        tempo = int(parts[1])
+        qpm = int(parts[1])
         quantize = NoteValue.from_int(int(parts[2]))
 
         parts = parts[3].split("/")
@@ -147,14 +146,14 @@ class BeatStudioPattern:
 
         return cls(
             name=name,
-            tempo=tempo,
+            qpm=qpm,
             time_signature=time_signature,
             quantize=quantize,
             steps=steps,
             hits=hits)
 
-    def print(self, file: "SupportsWrite[str] | None" = None, override_tempo: int | None = None) -> None:
-        print(self._make_header(override_tempo=override_tempo), file=file)
+    def print(self, file: "SupportsWrite[str] | None" = None) -> None:
+        print(self._make_header(), file=file)
         temp = list(map(lambda n: (n, n.value), self.hits.keys()))
         note_names = sorted(temp, key=lambda p: p[1])
         width = max(map(lambda p: len(p[1]), temp))
@@ -167,12 +166,9 @@ class BeatStudioPattern:
     def _velocity_char(velocity: BeatStudioVelocity | None) -> str:
         return "." if velocity is None else str(velocity.value)
 
-    def _make_header(self, override_tempo: int | None) -> str:
+    def _make_header(self) -> str:
         if not all(map(lambda c: c.isprintable(), self.name)):
             raise ValueError(f"Invalid pattern name {self.name}")
 
         encoded_name = self.name.replace("\"", "\\\"")
-        qpm = round(midi_tempo_to_qpm(self.tempo)) \
-            if override_tempo is None \
-            else override_tempo
-        return f"[\"{encoded_name}\" - {self.steps} - {qpm} - {self.quantize.value[0]} - {self.time_signature}]"
+        return f"[\"{encoded_name}\" - {self.steps} - {self.qpm} - {self.quantize.value[0]} - {self.time_signature}]"
