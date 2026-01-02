@@ -21,9 +21,6 @@
 #
 
 # pyright: reportAny=false
-# pyright: reportUnknownArgumentType=false
-# pyright: reportUnknownLambdaType=false
-# pyright: reportUnknownMemberType=false
 
 from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from beat_studio_importer.import_command import do_import

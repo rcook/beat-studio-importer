@@ -43,7 +43,7 @@ class BeatStudioPattern:
     tempo: BeatStudioTempo  # Is this QPM, BPM or something else?
     time_signature: TimeSignature
     quantize: NoteValue
-    steps: int
+    step_count: int
     hits: Hits
 
     @classmethod
@@ -112,7 +112,7 @@ class BeatStudioPattern:
         if len(parts) != 4:
             raise ValueError(f"Invalid header {header}")
 
-        steps = int(parts[0])
+        step_count = int(parts[0])
         tempo = BeatStudioTempo(int(parts[1]))
         quantize = NoteValue.from_int(int(parts[2]))
 
@@ -134,7 +134,7 @@ class BeatStudioPattern:
                 raise ValueError(f"Invalid pattern {line}")
             note_name = BeatStudioNoteName.from_str(parts[0].strip())
             temp = parts[1].strip()
-            if len(temp) != steps:
+            if len(temp) != step_count:
                 raise ValueError(f"Invalid pattern {line}")
 
             hits[note_name] = [translate_hit_char(c) for c in temp]
@@ -144,7 +144,7 @@ class BeatStudioPattern:
             tempo=tempo,
             time_signature=time_signature,
             quantize=quantize,
-            steps=steps,
+            step_count=step_count,
             hits=hits)
 
     def print(self, file: "SupportsWrite[str] | None" = None) -> None:
@@ -166,4 +166,4 @@ class BeatStudioPattern:
             raise ValueError(f"Invalid pattern name {self.name}")
 
         encoded_name = self.name.replace("\"", "\\\"")
-        return f"[\"{encoded_name}\" - {self.steps} - {self.tempo} - {self.quantize.value[0]} - {self.time_signature}]"
+        return f"[\"{encoded_name}\" - {self.step_count} - {self.tempo} - {self.quantize.value[0]} - {self.time_signature}]"

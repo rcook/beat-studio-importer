@@ -161,7 +161,7 @@ class Region:
             tempo=tempo,
             time_signature=self.time_signature,
             quantize=quantize,
-            steps=steps,
+            step_count=steps,
             hits=all_hits)
 
     @classmethod
