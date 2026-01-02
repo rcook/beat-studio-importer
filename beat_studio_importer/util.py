@@ -1,4 +1,5 @@
 from beat_studio_importer.note import Velocity
+from typing import Literal, overload
 
 
 MIDI_TEMPO_BASIS: int = 60_000_000
@@ -33,3 +34,27 @@ def downscale_velocity(velocity: Velocity) -> int:
 # Tempo as quarter notes per minute
 def midi_tempo_to_qpm(tempo: int) -> float:
     return MIDI_TEMPO_BASIS / tempo
+
+
+@overload
+def checked_cast[T](cls: type[T], value: object, optional: Literal[True]) -> T | None:
+    raise NotImplementedError()
+
+
+@overload
+def checked_cast[T](cls: type[T], value: object, optional: Literal[False]) -> T:
+    raise NotImplementedError()
+
+
+@overload
+def checked_cast[T](cls: type[T], value: object) -> T:
+    raise NotImplementedError()
+
+
+def checked_cast[T](cls: type[T], value: object, optional: bool = False) -> T | None:
+    if optional and value is None:
+        return value
+    if isinstance(value, cls):
+        return value
+    raise AssertionError(
+        f"Value {value} of type {type(value)} is not of required type {cls}")

@@ -9,48 +9,49 @@ from beat_studio_importer.info_command import do_info
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.user_error import UserError
+from beat_studio_importer.util import checked_cast
 from colorama import Fore, Style
 from pathlib import Path
 import sys
 
 
 def do_import_args(args: Namespace) -> None:
-    note_track_name = args.note_track_name
+    note_track_name = checked_cast(str, args.note_track_name, optional=True)
 
-    metadata_track_name = args.metadata_track_name
+    metadata_track_name = checked_cast(str, None, optional=True)
     if metadata_track_name is None and note_track_name is not None:
         metadata_track_name = note_track_name
 
     note_name_map = None \
         if args.note_name_path is None \
-        else NoteNameMap.load(args.note_name_path)
+        else NoteNameMap.load(checked_cast(Path, args.note_name_path))
 
-    quantize = NoteValue.from_denominator(args.quantize)
+    quantize = NoteValue.from_denominator(checked_cast(int, args.quantize))
 
     do_import(
-        path=args.path,
+        path=checked_cast(Path, args.path),
         note_track_name=note_track_name,
         metadata_track_name=metadata_track_name,
         note_name_map=note_name_map,
-        region_id=args.region,
+        region_id=checked_cast(int, args.region, optional=True),
         quantize=quantize,
-        name=args.name,
-        override_tempo=args.override_tempo)
+        name=checked_cast(str, args.name, optional=True),
+        override_tempo=checked_cast(int, args.override_tempo, optional=True))
 
 
 def do_info_args(args: Namespace) -> None:
-    note_track_name = args.note_track_name
+    note_track_name = checked_cast(str, args.note_track_name, optional=True)
 
-    metadata_track_name = args.metadata_track_name
+    metadata_track_name = checked_cast(str, None, optional=True)
     if metadata_track_name is None and note_track_name is not None:
         metadata_track_name = note_track_name
 
     note_name_map = None \
         if args.note_name_path is None \
-        else NoteNameMap.load(args.note_name_path)
+        else NoteNameMap.load(checked_cast(Path, args.note_name_path))
 
     do_info(
-        path=args.path,
+        path=checked_cast(Path, args.path),
         note_track_name=note_track_name,
         metadata_track_name=metadata_track_name,
         note_name_map=note_name_map)
@@ -124,8 +125,8 @@ def main(cwd: Path, argv: list[str]) -> None:
         dest="quantize",
         metavar="QUANTIZE",
         type=int,
-        choices=sorted(member.value for member in NoteValue),
-        default=NoteValue.SIXTEENTH.value,
+        choices=sorted(member.value[0] for member in NoteValue),
+        default=NoteValue.SIXTEENTH.value[0],
         help="quantize step (4=quarter note, 8=eighth etc.)")
     _ = p.add_argument(
         "--name",
