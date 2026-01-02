@@ -28,6 +28,7 @@
 from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
+from beat_studio_importer.misc import RegionId
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.typing_util import checked_cast
@@ -38,27 +39,18 @@ import sys
 
 
 def do_import_args(args: Namespace) -> None:
-    note_track_name = checked_cast(str, args.note_track_name, optional=True)
-
-    metadata_track_name = checked_cast(
-        str,
-        args.metadata_track_name,
-        optional=True)
-    if metadata_track_name is None and note_track_name is not None:
-        metadata_track_name = note_track_name
-
     note_name_map = None \
         if args.note_name_path is None \
         else NoteNameMap.load(checked_cast(Path, args.note_name_path))
 
+    temp = checked_cast(int, args.region, optional=True)
+    region_id = None if temp is None else RegionId(temp)
     quantize = NoteValue.from_int(checked_cast(int, args.quantize))
 
     do_import(
         path=checked_cast(Path, args.path),
-        note_track_name=note_track_name,
-        metadata_track_name=metadata_track_name,
         note_name_map=note_name_map,
-        region_id=checked_cast(int, args.region, optional=True),
+        region_id=region_id,
         quantize=quantize,
         name=checked_cast(str, args.name, optional=True),
         override_tempo=checked_cast(int, args.override_tempo, optional=True),
@@ -66,24 +58,7 @@ def do_import_args(args: Namespace) -> None:
 
 
 def do_info_args(args: Namespace) -> None:
-    note_track_name = checked_cast(str, args.note_track_name, optional=True)
-
-    metadata_track_name = checked_cast(
-        str,
-        args.metadata_track_name,
-        optional=True)
-    if metadata_track_name is None and note_track_name is not None:
-        metadata_track_name = note_track_name
-
-    note_name_map = None \
-        if args.note_name_path is None \
-        else NoteNameMap.load(checked_cast(Path, args.note_name_path))
-
-    do_info(
-        path=checked_cast(Path, args.path, optional=True),
-        note_track_name=note_track_name,
-        metadata_track_name=metadata_track_name,
-        note_name_map=note_name_map)
+    do_info(path=checked_cast(Path, args.path, optional=True))
 
 
 def resolve_path(cwd: Path, s: str) -> Path:
@@ -102,26 +77,10 @@ def add_path_arg(parser: ArgumentParser, cwd: Path, optional: bool = False) -> N
         help="path of file to import")
 
 
-def add_common_args(parser: ArgumentParser, cwd: Path) -> None:
+def add_note_map_path_arg(parser: ArgumentParser, cwd: Path) -> None:
     def resolved_path(s: str) -> Path:
         return resolve_path(cwd, s)
 
-    _ = parser.add_argument(
-        "--track",
-        "-t",
-        dest="note_track_name",
-        metavar="NOTE_TRACK_NAME",
-        type=str,
-        default=None,
-        help="track name")
-    _ = parser.add_argument(
-        "--metadata-track",
-        "-m",
-        dest="metadata_track_name",
-        metavar="METADATA_TRACK_NAME",
-        type=str,
-        default=None,
-        help="metadata track name (tempo and time signature track etc.)")
     _ = parser.add_argument(
         "--note-name-path",
         "-n",
@@ -140,7 +99,7 @@ def main(cwd: Path, argv: list[str]) -> None:
     p = parsers.add_parser(name="import")
     p.set_defaults(func=do_import_args)
     add_path_arg(p, cwd)
-    add_common_args(p, cwd)
+    add_note_map_path_arg(p, cwd)
     _ = p.add_argument(
         "--region",
         "-r",
@@ -184,7 +143,6 @@ def main(cwd: Path, argv: list[str]) -> None:
     p = parsers.add_parser(name="info")
     p.set_defaults(func=do_info_args)
     add_path_arg(p, cwd, optional=True)
-    add_common_args(p, cwd)
 
     args = parser.parse_args(argv)
     result: object = None

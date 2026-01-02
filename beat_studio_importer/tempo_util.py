@@ -20,10 +20,11 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.misc import MidiTempo, Qpm
 from fractions import Fraction
 
 
-def midi_tempo_to_qpm(tempo: int) -> Fraction:
+def midi_tempo_to_qpm(tempo: MidiTempo) -> Qpm:
     """
     Convert MIDI tempo to QPM tempo
 
@@ -32,4 +33,4 @@ def midi_tempo_to_qpm(tempo: int) -> Fraction:
     :return: Tempo in quarter notes per minute
     :rtype: Fraction
     """
-    return Fraction(60_000_000, tempo)
+    return Qpm(Fraction(60_000_000, tempo))

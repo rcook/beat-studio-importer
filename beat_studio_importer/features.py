@@ -29,6 +29,3 @@ def is_feature_enabled(name: str, default: bool = False) -> bool:
         return default
     s = value.strip().lower()
     return len(s) == 0 or s in ["1", "on", "enable", "enabled", "yes"]
-
-
-NEW_TIMELINE_FEATURE_ENABLED: bool = is_feature_enabled("NEW_TIMELINE")

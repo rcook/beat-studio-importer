@@ -20,137 +20,122 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-# pyright: reportAttributeAccessIssue=false
-
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
+from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.descriptor import Descriptor
-from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
-from beat_studio_importer.misc import MidiVelocity
-from beat_studio_importer.note import Note
+from beat_studio_importer.misc import Bpm, Denominator, MidiTempo, Numerator, Qpm, RegionId, Tick, TimeSignature2
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
-from beat_studio_importer.region_builder import RegionBuilder, Tick
 from beat_studio_importer.tempo_util import midi_tempo_to_qpm
 from beat_studio_importer.time_signature import TimeSignature
-from collections.abc import Iterable
+from beat_studio_importer.timeline import NoteEvent, TempoEvent, TimeSignatureEvent, Timeline
 from dataclasses import dataclass
-from fractions import Fraction
-from functools import cached_property
-from mido import MidiTrack
-from mido.messages import BaseMessage
-from typing import cast
+from functools import cached_property, reduce
+from typing import TypeVar
+
+
+DEFAULT_TEMPO: MidiTempo = MidiTempo(120)
+DEFAULT_TIME_SIGNATURE: TimeSignature2 = (Numerator(4), Denominator(4))
+
+
+T = TypeVar("T", bound="Region")
 
 
 @dataclass(frozen=True)
 class Region:
-    region_id: int
+    id: RegionId
     ticks_per_beat: int
     start_tick: Tick
     end_tick: Tick
-    bars: int
-    tempo: int
+    tempo: MidiTempo
     time_signature: TimeSignature
-    notes: list[tuple[Tick, Note]]
+    notes: list[NoteEvent]
+    bar_count: int
 
-    @staticmethod
-    def from_midi_messages(note_track: MidiTrack, metadata_track: MidiTrack, note_name_map: NoteNameMap, ticks_per_beat: int, silently_discard_hit_on_boundary: bool = True) -> "list[Region]":
-        def make_region(builder: RegionBuilder, region_id: int) -> Region:
-            start_tick = builder.start_tick
+    @classmethod
+    def build_all(cls: type[T], timeline: Timeline, discard_boundary_hits: bool = True) -> list[T]:
+        regions: list[T] = []
+        tempo = DEFAULT_TEMPO
+        time_signature = DEFAULT_TIME_SIGNATURE
+        start_tick = Tick(0)
+        tempo_event: TempoEvent | None = None
+        time_signature_event: TimeSignatureEvent | None = None
+        note_events: list[NoteEvent] = []
+        for event_tick, events in timeline.events:
+            assert event_tick >= start_tick
+            for event in events:
+                match event:
+                    case TempoEvent() | TimeSignatureEvent() as e:
+                        if event_tick == start_tick:
+                            if isinstance(e, TempoEvent):
+                                assert tempo_event is None, "conflicting tempo events"
+                                tempo_event = e
+                            else:
+                                assert time_signature_event is None, "conflicting time signature events"
+                                time_signature_event = e
+                        else:
+                            region, tempo, time_signature = cls._close_region(
+                                timeline=timeline,
+                                tempo=tempo,
+                                time_signature=time_signature,
+                                region_id=RegionId(len(regions) + 1),
+                                start_tick=start_tick,
+                                end_tick=event_tick,
+                                tempo_event=tempo_event,
+                                time_signature_event=time_signature_event,
+                                note_events=note_events,
+                                discard_boundary_hits=discard_boundary_hits)
+                            if region is not None:
+                                regions.append(region)
+                            start_tick = event_tick
+                            if isinstance(e, TempoEvent):
+                                tempo_event = e
+                                time_signature_event = None
+                            else:
+                                tempo_event = None
+                                time_signature_event = e
+                            note_events = []
+                    case NoteEvent() as e: note_events.append(e)
 
-            end_tick = builder.end_tick
-            assert end_tick is not None
+        region, _, _ = cls._close_region(
+            timeline=timeline,
+            tempo=tempo,
+            time_signature=time_signature,
+            region_id=RegionId(len(regions) + 1),
+            start_tick=start_tick,
+            end_tick=None,
+            tempo_event=tempo_event,
+            time_signature_event=time_signature_event,
+            note_events=note_events,
+            discard_boundary_hits=discard_boundary_hits)
+        if region is not None:
+            regions.append(region)
 
-            bars = builder.bars
-            assert bars is not None
-
-            tempo = builder.tempo
-            assert tempo is not None
-
-            time_signature = builder.time_signature
-            assert time_signature is not None
-
-            return Region(
-                region_id=region_id,
-                ticks_per_beat=ticks_per_beat,
-                start_tick=start_tick,
-                end_tick=end_tick,
-                bars=bars,
-                tempo=tempo,
-                time_signature=time_signature,
-                notes=builder.notes)
-
-        # Compute regions based on time signature and tempo changes
-        builders = RegionBuilder.from_midi_messages(
-            metadata_track,
-            ticks_per_beat)
-
-        # Add notes to regions
-        i = iter(builders)
-        builder = next(i)
-        tick = 0
-        for m in cast(Iterable[BaseMessage], note_track):
-            delta = cast(int, m.time)
-            tick += delta
-            if cast(str, m.type) != "note_on":
-                continue
-
-            if builder.end_tick is not None and tick >= builder.end_tick:
-                builder = next(i)
-
-            note_name = note_name_map[cast(int, m.note)]
-            note = Note(
-                name=note_name,
-                velocity=MidiVelocity(cast(int, m.velocity)))
-            builder.notes.append((tick - builder.start_tick, note))
-
-        assert builder.end_tick is None
-        assert builder.bars is None
-        assert builder.notes[0][0] == 0
-        assert len(builder.notes) > 0
-        assert builder.time_signature is not None
-
-        last_note_tick = builder.notes[-1][0]
-        ticks_per_bar = builder.time_signature.ticks_per_bar(ticks_per_beat)
-
-        # Handle note hit on boundary
-        bars, r = divmod(last_note_tick, ticks_per_bar)
-        assert bars >= 0 and r >= 0
-        if r == 0 and silently_discard_hit_on_boundary:
-            _ = builder.notes.pop()
-        else:
-            bars += 1
-
-        builder.end_tick = builder.start_tick + bars * ticks_per_bar
-        builder.bars = bars
-
-        return [make_region(builder, region_id) for region_id, builder in enumerate(builders, 1)]
+        return regions
 
     @cached_property
     def descriptor(self) -> Descriptor:
         return Descriptor(
             name=None,
-            description=f"{self.start_tick}-{self.end_tick}: {self.qpm:.1f}qpm, {self.bpm:.1f}bpm, {self.time_signature}, {self.bars} bars")
-
-    @cached_property
-    def ticks(self) -> int:
-        return self.end_tick - self.start_tick
+            description=f"{self.start_tick}-{self.end_tick}: {self.qpm:.1f}qpm, {self.bpm:.1f}bpm, {self.time_signature}, {self.bar_count} bars")
 
     # Tempo as quarter notes per minute
     @cached_property
-    def qpm(self) -> Fraction:
+    def qpm(self) -> Qpm:
         return midi_tempo_to_qpm(self.tempo)
 
     # Tempo as basis beats per minute
     @cached_property
-    def bpm(self) -> Fraction:
+    def bpm(self) -> Bpm:
         return self.time_signature.basis.midi_tempo_to_bpm(self.tempo)
 
-    def render(self, name: str, quantize: NoteValue, override_tempo: int | None = None) -> BeatStudioPattern:
+    def render(self, name: str, note_name_map: NoteNameMap,  quantize: NoteValue, override_tempo: int | None = None) -> BeatStudioPattern:
         ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value[0])
         assert r == 0
 
-        steps, r = divmod(self.ticks, ticks_per_step)
+        tick_count = self.end_tick - self.start_tick
+        steps, r = divmod(tick_count, ticks_per_step)
         assert r == 0
 
         all_hits: Hits = {
@@ -158,12 +143,13 @@ class Region:
             for member in BeatStudioNoteName
         }
 
-        for (tick, note) in self.notes:
-            step, r = divmod(tick, ticks_per_step)
+        for e in self.notes:
+            step, r = divmod(e.tick - self.start_tick, ticks_per_step)
             assert r == 0
-            _, note_name, = note.name.value
-            hits = all_hits[note_name]
-            hits[step] = BeatStudioVelocity.from_midi_velocity(note.velocity)
+            note_name = note_name_map[e.note]
+            _, key, = note_name.value
+            hits = all_hits[key]
+            hits[step] = BeatStudioVelocity.from_midi_velocity(e.velocity)
 
         qpm = round(midi_tempo_to_qpm(self.tempo)) \
             if override_tempo is None \
@@ -176,3 +162,57 @@ class Region:
             quantize=quantize,
             steps=steps,
             hits=all_hits)
+
+    @classmethod
+    def _close_region(cls: type[T], timeline: Timeline, tempo: MidiTempo, time_signature: tuple[Numerator, Denominator], region_id: RegionId, start_tick: Tick, end_tick: Tick | None, tempo_event: TempoEvent | None, time_signature_event: TimeSignatureEvent | None, note_events: list[NoteEvent], discard_boundary_hits: bool) -> tuple[T | None, MidiTempo, TimeSignature2]:
+        def reduce_func(end_tick: Tick, note_event: NoteEvent) -> Tick:
+            assert note_event.tick >= end_tick
+            return max(end_tick, note_event.tick)
+
+        if tempo_event is None and time_signature_event is None and len(note_events) == 0:
+            return None, tempo, time_signature
+
+        if tempo_event is None:
+            temp_tempo = tempo
+        else:
+            assert tempo_event.tick == start_tick
+            temp_tempo = tempo_event.tempo
+
+        if time_signature_event is None:
+            temp_time_signature = time_signature
+        else:
+            assert time_signature_event.tick == start_tick
+            temp_time_signature = time_signature_event.numerator, time_signature_event.denominator
+
+        temp = TimeSignature(
+            numerator=temp_time_signature[0],
+            denominator=NoteValue.from_int(temp_time_signature[1]))
+
+        if end_tick is None:
+            end_tick = reduce(reduce_func, note_events, start_tick)
+
+        ticks_per_bar = temp.ticks_per_bar(timeline.ticks_per_beat)
+
+        # Handle note hit on boundary
+        bar_count, r = divmod(end_tick - start_tick, ticks_per_bar)
+        assert bar_count >= 0 and r >= 0
+        if r == 0 and discard_boundary_hits:
+            e = note_events[-1]
+            assert e.tick <= end_tick
+            if e.tick >= end_tick:
+                e = note_events.pop()
+        else:
+            bar_count += 1
+
+        end_tick = Tick(start_tick + bar_count * ticks_per_bar)
+
+        region = cls(
+            id=region_id,
+            ticks_per_beat=timeline.ticks_per_beat,
+            start_tick=start_tick,
+            end_tick=end_tick,
+            tempo=temp_tempo,
+            time_signature=temp,
+            notes=note_events,
+            bar_count=bar_count)
+        return region, temp_tempo, temp_time_signature

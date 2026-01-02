@@ -23,9 +23,10 @@
 from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP
 from beat_studio_importer.note_value import NoteValue
-from beat_studio_importer.region import Region
 from io import StringIO
 from pathlib import Path
+from beat_studio_importer.region import Region
+from beat_studio_importer.timeline import Timeline
 from tests.util import is_close_tempo
 
 
@@ -34,7 +35,11 @@ SAMPLES_DIR: Path = Path(__file__).parent.parent / "samples"
 
 def render_to_lines(region: Region, print_test_case: bool = False) -> list[str]:
     with StringIO() as f:
-        region.render("name", NoteValue.SIXTEENTH).print(file=f)
+        pattern = region.render(
+            "name",
+            DEFAULT_NOTE_NAME_MAP,
+            NoteValue.SIXTEENTH)
+        pattern.print(file=f)
         lines = f.getvalue().split("\n")
     if print_test_case:
         line_count = len(lines)
@@ -54,14 +59,9 @@ class TestRegion:
         source = MidiSource.load(SAMPLES_DIR / "reaper" / "smf-type-1.mid")
         assert len(source.tracks) == 2
 
-        note_track = source.tracks[1]
-        metadata_track = source.tracks[0]
+        timeline = Timeline.build(source.file)
 
-        regions = Region.from_midi_messages(
-            note_track,
-            metadata_track,
-            DEFAULT_NOTE_NAME_MAP,
-            source.ticks_per_beat)
+        regions = Region.build_all(timeline)
         assert len(regions) == 5
 
         assert is_close_tempo(100, regions[0].qpm)
@@ -153,15 +153,9 @@ class TestRegion:
         source = MidiSource.load(SAMPLES_DIR / "seven-eight.mid")
         assert len(source.tracks) == 2
 
-        note_track = source.tracks[1]
-        metadata_track = source.tracks[0]
+        timeline = Timeline.build(source.file)
 
-        regions = Region.from_midi_messages(
-            note_track,
-            metadata_track,
-            DEFAULT_NOTE_NAME_MAP,
-            source.ticks_per_beat,
-            silently_discard_hit_on_boundary=True)
+        regions = Region.build_all(timeline, discard_boundary_hits=True)
         assert len(regions) == 1
 
         assert is_close_tempo(120, regions[0].qpm)
@@ -181,12 +175,7 @@ class TestRegion:
             "",
         ]
 
-        regions = Region.from_midi_messages(
-            note_track,
-            metadata_track,
-            DEFAULT_NOTE_NAME_MAP,
-            source.ticks_per_beat,
-            silently_discard_hit_on_boundary=False)
+        regions = Region.build_all(timeline, discard_boundary_hits=False)
         assert len(regions) == 1
 
         assert is_close_tempo(120, regions[0].qpm)

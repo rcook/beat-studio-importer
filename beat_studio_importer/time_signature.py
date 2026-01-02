@@ -24,9 +24,9 @@
 # pyright: reportUnknownVariableType=false
 
 from beat_studio_importer.basis import Basis
+from beat_studio_importer.misc import Bpm, MidiTempo
 from beat_studio_importer.note_value import NoteValue
 from dataclasses import dataclass
-from fractions import Fraction
 from functools import cached_property
 from mido import MetaMessage
 from typing import TypeVar, cast, override
@@ -103,7 +103,7 @@ class TimeSignature:
         return q
 
     # Tempo as basis beats per minute
-    def midi_tempo_to_bpm(self, tempo: int) -> Fraction:
+    def midi_tempo_to_bpm(self, tempo: MidiTempo) -> Bpm:
         return self.basis.midi_tempo_to_bpm(tempo)
 
 

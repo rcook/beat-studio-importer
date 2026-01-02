@@ -20,6 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.misc import Bpm, MidiTempo
 from beat_studio_importer.tempo_util import midi_tempo_to_qpm
 from enum import Enum, auto, unique
 from fractions import Fraction
@@ -36,7 +37,7 @@ class Basis(Enum):
     WHOLE = auto(), 4, "whole"
 
     # Tempo as basis beats per minute
-    def midi_tempo_to_bpm(self, tempo: int) -> Fraction:
+    def midi_tempo_to_bpm(self, tempo: MidiTempo) -> Bpm:
         qpm = midi_tempo_to_qpm(tempo)
         multiplier = self.value[1]
-        return qpm / multiplier
+        return Bpm(qpm / multiplier)

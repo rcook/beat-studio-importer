@@ -10,8 +10,6 @@ python \
     ./beat-studio-importer.py \
     import \
     samples/example-1.mid \
-    --track 2 \
-    --metadata-track 1 \
     --region 2 \
     --quantize 16 \
     --add

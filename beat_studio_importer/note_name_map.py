@@ -20,6 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.misc import MidiNote
 from beat_studio_importer.note_name import NoteName
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,7 +34,7 @@ T = TypeVar("T", bound="NoteNameMap")
 @dataclass(frozen=True)
 class NoteNameMap:
     name: str
-    notes: dict[int, NoteName]
+    notes: dict[MidiNote, NoteName]
 
     @classmethod
     def load(cls: type[T], path: Path) -> T:
@@ -44,11 +45,11 @@ class NoteNameMap:
         return cls(
             name=cast(str, obj["name"]),
             notes={
-                k: NoteName[v.upper()]
+                MidiNote(k): NoteName[v.upper()]
                 for k, v in cast(dict[int, str], obj["notes"]).items()
             })
 
-    def __getitem__(self, key: int) -> NoteName:
+    def __getitem__(self, key: MidiNote) -> NoteName:
         return self.notes[key]
 
     def save(self, path: Path) -> None:
