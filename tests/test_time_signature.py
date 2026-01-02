@@ -49,7 +49,7 @@ class TestTimeSignature:
         (8, NoteValue.EIGHTH, Basis.EIGHTH),
         (7, NoteValue.SIXTEENTH, Basis.SIXTEENTH)
     ])
-    def test_basis(self, numerator, denominator, expected) -> None:
+    def test_basis(self, numerator: int, denominator: NoteValue, expected: Basis) -> None:
         time_signature = TimeSignature(
             numerator=numerator,
             denominator=denominator)
