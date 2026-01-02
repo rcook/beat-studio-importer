@@ -34,6 +34,7 @@ from beat_studio_importer.time_signature import TimeSignature
 from beat_studio_importer.util import midi_tempo_to_qpm
 from collections.abc import Iterable
 from dataclasses import dataclass
+from fractions import Fraction
 from functools import cached_property
 from mido import MidiTrack
 from mido.messages import BaseMessage
@@ -138,12 +139,12 @@ class Region:
 
     # Tempo as quarter notes per minute
     @cached_property
-    def qpm(self) -> float:
+    def qpm(self) -> Fraction:
         return midi_tempo_to_qpm(self.tempo)
 
     # Tempo as basis beats per minute
     @cached_property
-    def bpm(self) -> float:
+    def bpm(self) -> Fraction:
         return self.time_signature.basis.midi_tempo_to_bpm(self.tempo)
 
     def render(self, name: str, quantize: NoteValue, override_tempo: int | None = None) -> BeatStudioPattern:

@@ -20,6 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from fractions import Fraction
 from os import getenv
 from pathlib import Path
 from typing import Literal, overload
@@ -51,8 +52,8 @@ def downscale(value: int, source: range, target: range) -> int:
 
 
 # Tempo as quarter notes per minute
-def midi_tempo_to_qpm(tempo: int) -> float:
-    return MIDI_TEMPO_BASIS / tempo
+def midi_tempo_to_qpm(tempo: int) -> Fraction:
+    return Fraction(MIDI_TEMPO_BASIS, tempo)
 
 
 @overload
