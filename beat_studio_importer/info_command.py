@@ -22,11 +22,13 @@
 
 from beat_studio_importer.import_ui import select_tracks
 from beat_studio_importer.midi_source import MidiSource
+from beat_studio_importer.midi_util import summarize_midi_file
 from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP, NoteNameMap
 from beat_studio_importer.region import Region
-from beat_studio_importer.ui import print_key_value
+from beat_studio_importer.table import Table
+from beat_studio_importer.ui import cprint
 from beat_studio_importer.user_error import UserError
-from colorama import Fore, Style
+from colorama import Fore
 from pathlib import Path
 
 
@@ -35,6 +37,9 @@ def do_info(path: Path, note_track_name: str | None, metadata_track_name: str | 
         raise UserError(f"Input file {path} not found")
 
     source = MidiSource.load(path)
+
+    summarize_midi_file(source.file)
+
     note_track, metadata_track = select_tracks(
         source.path,
         source.tracks,
@@ -49,19 +54,17 @@ def do_info(path: Path, note_track_name: str | None, metadata_track_name: str | 
         note_name_map,
         source.ticks_per_beat)
 
-    print_key_value("Ticks per beat", source.ticks_per_beat)
     for region in regions:
-        print(
-            Fore.LIGHTYELLOW_EX,
-            f"Region {region.region_id}",
-            Style.RESET_ALL,
-            sep="")
+        print()
+        cprint(Fore.LIGHTYELLOW_EX, f"Region {region.region_id}")
         beat = region.time_signature.basis.value[2]
-        print_key_value("MIDI tempo", region.tempo)
-        print_key_value("Time signature", region.time_signature)
-        print_key_value(
-            "QPM tempo (quarter notes per minute)",
-            f"{region.qpm:.1f}")
-        print_key_value(
-            f"BPM tempo (beats per minute, beat={beat})",
-            f"{region.bpm:.1f}")
+        with Table((None, None, "{}", Fore.LIGHTBLUE_EX), (None, None, "{}", Fore.LIGHTCYAN_EX), column_sep="  ") as table:
+            table.add_row("MIDI tempo", region.tempo)
+            table.add_row("Time signature", region.time_signature)
+            table.add_row(
+                "QPM tempo (quarter notes per minute)",
+                f"{region.qpm:.1f}")
+            table.add_row(
+                f"BPM tempo (beats per minute, beat={beat})",
+                f"{region.bpm:.1f}")
+            table.print()

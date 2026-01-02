@@ -24,10 +24,10 @@ from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
 from beat_studio_importer.beat_studio_util import default_patterns_beat_path
 from beat_studio_importer.import_ui import select_region, select_tracks
 from beat_studio_importer.midi_source import MidiSource
+from beat_studio_importer.midi_util import summarize_midi_file
 from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP, NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region import Region
-from beat_studio_importer.ui import print_key_value
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from pathlib import Path
@@ -38,6 +38,10 @@ def do_import(path: Path, note_track_name: str | None, metadata_track_name: str 
         raise UserError(f"Input file {path} not found")
 
     source = MidiSource.load(path)
+
+    summarize_midi_file(source.file)
+    print()
+
     note_track, metadata_track = select_tracks(
         source.path,
         source.tracks,
@@ -56,10 +60,6 @@ def do_import(path: Path, note_track_name: str | None, metadata_track_name: str 
 
     name = name or f"{source.path.stem} region {region.region_id}"
     pattern = region.render(name, quantize, override_tempo=override_tempo)
-
-    print_key_value("File", source.path)
-    print_key_value("Ticks per beat", source.ticks_per_beat)
-    print()
 
     print(Fore.LIGHTYELLOW_EX, end="")
     pattern.print()

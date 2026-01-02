@@ -23,12 +23,14 @@
 from colorama import Fore, Style
 
 
+def cprint(*values: object, sep: str | None = "", end: str | None = "\n") -> None:
+    print(*values, Style.RESET_ALL, sep=sep, end=end)
+
+
 def print_key_value(name: str, value: object) -> None:
-    print(
+    cprint(
         Fore.LIGHTBLUE_EX,
         name,
         ": ",
         Fore.LIGHTCYAN_EX,
-        str(value),
-        Style.RESET_ALL,
-        sep="")
+        value)
