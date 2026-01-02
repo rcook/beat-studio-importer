@@ -23,9 +23,13 @@
 from fractions import Fraction
 
 
-MIDI_TEMPO_BASIS: int = 60_000_000
-
-
-# Tempo as quarter notes per minute
 def midi_tempo_to_qpm(tempo: int) -> Fraction:
-    return Fraction(MIDI_TEMPO_BASIS, tempo)
+    """
+    Convert MIDI tempo to QPM tempo
+
+    :param tempo: MIDI tempo in microseconds per quarter note
+    :type tempo: int
+    :return: Tempo in quarter notes per minute
+    :rtype: Fraction
+    """
+    return Fraction(60_000_000, tempo)
