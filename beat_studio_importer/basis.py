@@ -28,7 +28,7 @@ from enum import Enum, auto, unique
 class Basis(Enum):
     SIXTEENTH = auto(), 0.25, "sixteenth"
     EIGHTH = auto(), 0.5, "eighth"
-    DOTTED_EIGHTH = auto(), 0.7, "dotted eight"
+    DOTTED_EIGHTH = auto(), 0.75, "dotted eighth"
     QUARTER = auto(), 1.0, "quarter"
     DOTTED_QUARTER = auto(), 1.5, "dotted quarter"
     HALF = auto(), 2.0, "half"
