@@ -21,11 +21,12 @@
 #
 
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
-from beat_studio_importer.note import Velocity
+from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.time_signature import TimeSignature
-from beat_studio_importer.util import downscale_velocity, midi_tempo_to_qpm
+from beat_studio_importer.util import midi_tempo_to_qpm
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar
 
 
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 T = TypeVar("T", bound="BeatStudioPattern")
 
 
-type Hits = dict[BeatStudioNoteName, list[Velocity | None]]
+type Hits = dict[BeatStudioNoteName, list[BeatStudioVelocity | None]]
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,100 @@ class BeatStudioPattern:
     quantize: NoteValue
     steps: int
     hits: Hits
+
+    @classmethod
+    def load(cls: type[T], path: Path) -> list[T]:
+        with path.open("rt") as f:
+            lines = f.readlines()
+
+        patterns: list[T] = []
+        header: str | None = None
+        pattern_lines: list[str] = []
+        for line in lines:
+            s = line.strip()
+            if s.startswith("#"):
+                # Skip comment
+                continue
+            if len(s) == 0:
+                # Skip blank line
+                continue
+
+            is_header = s.startswith("[") and s.endswith("]")
+            if is_header:
+                if header is None:
+                    assert len(pattern_lines) == 0
+                    header = s
+                else:
+                    patterns.append(cls.parse(header, pattern_lines))
+                    header = s
+                    pattern_lines.clear()
+            else:
+                pattern_lines.append(s)
+
+        if header is not None:
+            patterns.append(cls.parse(header, pattern_lines))
+        return patterns
+
+    @classmethod
+    def parse(cls: type[T], header: str, lines: list[str]) -> T:
+        def translate_hit_char(c: str) -> BeatStudioVelocity | None:
+            if c == ".":
+                return None
+            else:
+                return BeatStudioVelocity.from_int(int(c))
+
+        if not header.startswith("[\"") or not header.endswith("]"):
+            raise ValueError(f"Invalid header {header}")
+
+        s = header[2:-1]
+
+        idx = s.find("\"")
+        if idx == -1:
+            raise ValueError(f"Invalid header {header}")
+
+        encoded_name = s[:idx]
+        name = encoded_name.replace("\\\"", "\"")
+
+        parts = list(filter(
+            lambda s: len(s) > 0,
+            map(lambda s: s.strip(), s[idx + 1:].split("-"))))
+        if len(parts) != 4:
+            raise ValueError(f"Invalid header {header}")
+
+        steps = int(parts[0])
+        tempo = int(parts[1])
+        quantize = NoteValue.from_int(int(parts[2]))
+
+        parts = parts[3].split("/")
+        if len(parts) != 2:
+            raise ValueError(f"Invalid header {header}")
+
+        numerator = int(parts[0])
+        denominator = NoteValue.from_int(int(parts[1]))
+        time_signature = TimeSignature(
+            numerator=numerator,
+            denominator=denominator)
+
+        hits: Hits = {}
+
+        for line in lines:
+            parts = line.split(":")
+            if len(parts) != 2:
+                raise ValueError("Invalid pattern")
+            note_name = BeatStudioNoteName.from_str(parts[0].strip())
+            temp = parts[1].strip()
+            if len(temp) != steps:
+                raise ValueError("Invalid pattern")
+
+            hits[note_name] = [translate_hit_char(c) for c in temp]
+
+        return cls(
+            name=name,
+            tempo=tempo,
+            time_signature=time_signature,
+            quantize=quantize,
+            steps=steps,
+            hitsx=hits)
 
     def print(self, file: "SupportsWrite[str] | None" = None, override_tempo: int | None = None) -> None:
         print(self._make_header(override_tempo=override_tempo), file=file)
@@ -59,8 +154,8 @@ class BeatStudioPattern:
             print(f"{label:<{width}}: {hit_str}", file=file)
 
     @staticmethod
-    def _velocity_char(velocity: Velocity | None) -> str:
-        return "." if velocity is None else str(downscale_velocity(velocity))
+    def _velocity_char(velocity: BeatStudioVelocity | None) -> str:
+        return "." if velocity is None else str(velocity.value)
 
     def _make_header(self, override_tempo: int | None) -> str:
         if not all(map(lambda c: c.isprintable(), self.name)):

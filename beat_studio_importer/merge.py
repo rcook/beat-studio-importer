@@ -20,36 +20,26 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from enum import Enum, unique
+from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
+from os import getenv
+from pathlib import Path
 
 
-# Keys and names derived from default midi-mapping.properties
-@unique
-class BeatStudioNoteName(Enum):
-    # Key 55 "crash_cymbal"
-    CRASH = "CRASH"
-    # Key 52 "crash_cymbal_2"
-    CRASH2 = "CRASH2"
-    # Key 59 "ride_cymbal"
-    RIDE = "RIDE"
-    # Key 26 "hi-hat_closed"
-    HI_HAT = "HI-HAT"
-    # Key 26 "hi-hat_open"
-    OPEN_HIHAT = "OPEN-HIHAT"
-    # Key 36 "kick_drum"
-    KICK = "KICK"
-    # Key 38 "snare_drum"
-    SNARE = "SNARE"
-    # Key 48 "high_tom"
-    HI_TOM = "HI-TOM"
-    # Key 45 "mid_tom"
-    MED_TOM = "MED-TOM"
-    # Key 43 "low_tom"
-    LOW_TOM = "LOW-TOM"
+def default_patterns_beat_path() -> Path:
+    s = getenv("LOCALAPPDATA")
+    if s is None:
+        raise RuntimeError("LOCALAPPDATA is not defined")
 
-    @staticmethod
-    def from_str(s: str) -> "BeatStudioNoteName":
-        for member in BeatStudioNoteName:
-            if member.value == s:
-                return member
-        raise ValueError(f"Invalid Beat Studio note name {s}")
+    path = Path(s).resolve() / "Beat Studio" / "patterns.beat"
+    if not path.is_file():
+        raise RuntimeError(f"Configuration file {path} not found")
+
+    return path
+
+
+def do_merge() -> None:
+    path = default_patterns_beat_path()
+    patterns = BeatStudioPattern.load(path)
+    for pattern in patterns:
+        print(pattern.name)
+        print(pattern.hits)

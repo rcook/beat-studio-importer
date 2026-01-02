@@ -63,4 +63,4 @@ class NoteNameMap:
 
 
 DEFAULT_NOTE_NAME_MAP: NoteNameMap = NoteNameMap.load(
-    Path(__file__).parent.parent / "note-maps/general-midi-drums.notemap")
+    Path(__file__).parent.parent / "note-maps" / "general-midi-drums.notemap")

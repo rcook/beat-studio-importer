@@ -23,9 +23,10 @@
 # pyright: reportAttributeAccessIssue=false
 
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
+from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.descriptor import Descriptor
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
-from beat_studio_importer.note import Note, Velocity
+from beat_studio_importer.note import MidiVelocity, Note
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region_builder import RegionBuilder, Tick
@@ -96,7 +97,11 @@ class Region:
                 builder = next(i)
 
             note_name = note_name_map[cast(int, m.note)]
-            note = Note(name=note_name, velocity=cast(Velocity, m.velocity))
+            note = Note(
+                name=note_name,
+                velocity=cast(
+                    MidiVelocity,
+                    m.velocity))
             builder.notes.append((tick - builder.start_tick, note))
 
         assert builder.end_tick is None
@@ -158,7 +163,7 @@ class Region:
             assert r == 0
             _, note_name, = note.name.value
             hits = all_hits[note_name]
-            hits[step] = note.velocity
+            hits[step] = BeatStudioVelocity.from_midi(note.velocity)
 
         return BeatStudioPattern(
             name=name,

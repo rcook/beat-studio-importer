@@ -28,6 +28,7 @@
 from argparse import ArgumentParser, Namespace
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
+from beat_studio_importer.merge import do_merge
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.user_error import UserError
@@ -51,7 +52,7 @@ def do_import_args(args: Namespace) -> None:
         if args.note_name_path is None \
         else NoteNameMap.load(checked_cast(Path, args.note_name_path))
 
-    quantize = NoteValue.from_denominator(checked_cast(int, args.quantize))
+    quantize = NoteValue.from_int(checked_cast(int, args.quantize))
 
     do_import(
         path=checked_cast(Path, args.path),
@@ -175,6 +176,9 @@ def main(cwd: Path, argv: list[str]) -> None:
     p.set_defaults(func=do_info_args)
     add_path_arg(p, cwd)
     add_common_args(p, cwd)
+
+    p = parsers.add_parser(name="merge")
+    p.set_defaults(func=lambda _: do_merge())
 
     args = parser.parse_args(argv)
     result: object = None

@@ -54,7 +54,7 @@ class TimeSignature:
         if numerator < 1:
             raise ValueError(f"Invalid numerator {numerator}")
 
-        denominator = NoteValue.from_denominator(
+        denominator = NoteValue.from_int(
             cast(int, message.denominator))
 
         # What do I do if this isn't 24?

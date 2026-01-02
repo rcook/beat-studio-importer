@@ -33,8 +33,8 @@ class NoteValue(Enum):
     SIXTEENTH = 16, Basis.SIXTEENTH
 
     @staticmethod
-    def from_denominator(value: int) -> "NoteValue":
+    def from_int(value: int) -> "NoteValue":
         for member in NoteValue:
             if member.value[0] == value:
                 return member
-        raise ValueError(f"Invalid denominator {value}")
+        raise ValueError(f"Invalid note value {value}")

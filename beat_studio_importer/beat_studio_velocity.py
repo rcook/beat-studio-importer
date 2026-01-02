@@ -20,36 +20,29 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from enum import Enum, unique
+from beat_studio_importer.note import MidiVelocity
+from beat_studio_importer.util import downscale
+from enum import IntEnum, unique
 
 
-# Keys and names derived from default midi-mapping.properties
 @unique
-class BeatStudioNoteName(Enum):
-    # Key 55 "crash_cymbal"
-    CRASH = "CRASH"
-    # Key 52 "crash_cymbal_2"
-    CRASH2 = "CRASH2"
-    # Key 59 "ride_cymbal"
-    RIDE = "RIDE"
-    # Key 26 "hi-hat_closed"
-    HI_HAT = "HI-HAT"
-    # Key 26 "hi-hat_open"
-    OPEN_HIHAT = "OPEN-HIHAT"
-    # Key 36 "kick_drum"
-    KICK = "KICK"
-    # Key 38 "snare_drum"
-    SNARE = "SNARE"
-    # Key 48 "high_tom"
-    HI_TOM = "HI-TOM"
-    # Key 45 "mid_tom"
-    MED_TOM = "MED-TOM"
-    # Key 43 "low_tom"
-    LOW_TOM = "LOW-TOM"
+class BeatStudioVelocity(IntEnum):
+    LEVEL_0 = 0
+    LEVEL_1 = 1
+    LEVEL_2 = 2
+    LEVEL_3 = 3
+    LEVEL_4 = 4
+    LEVEL_5 = 5
+    LEVEL_6 = 6
+    LEVEL_7 = 7
+    LEVEL_8 = 8
+    LEVEL_9 = 9
 
     @staticmethod
-    def from_str(s: str) -> "BeatStudioNoteName":
-        for member in BeatStudioNoteName:
-            if member.value == s:
-                return member
-        raise ValueError(f"Invalid Beat Studio note name {s}")
+    def from_int(value: int) -> "BeatStudioVelocity":
+        return BeatStudioVelocity(value)
+
+    @staticmethod
+    def from_midi(velocity: MidiVelocity) -> "BeatStudioVelocity":
+        value = downscale(velocity, range(0, 128), range(0, 10))
+        return BeatStudioVelocity.from_int(value)

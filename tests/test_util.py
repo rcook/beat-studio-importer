@@ -20,7 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.util import downscale, downscale_velocity
+from beat_studio_importer.util import downscale
 
 
 class TestDownscale:
@@ -58,9 +58,3 @@ class TestDownscale:
         assert call_downscale(27) == 8
         assert call_downscale(28) == 9
         assert call_downscale(29) == 9
-
-
-class TestDownscaleVelocity:
-    def test_basics(self) -> None:
-        assert downscale_velocity(0) == 0
-        assert downscale_velocity(127) == 9

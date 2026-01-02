@@ -20,36 +20,10 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from enum import Enum, unique
+from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 
 
-# Keys and names derived from default midi-mapping.properties
-@unique
-class BeatStudioNoteName(Enum):
-    # Key 55 "crash_cymbal"
-    CRASH = "CRASH"
-    # Key 52 "crash_cymbal_2"
-    CRASH2 = "CRASH2"
-    # Key 59 "ride_cymbal"
-    RIDE = "RIDE"
-    # Key 26 "hi-hat_closed"
-    HI_HAT = "HI-HAT"
-    # Key 26 "hi-hat_open"
-    OPEN_HIHAT = "OPEN-HIHAT"
-    # Key 36 "kick_drum"
-    KICK = "KICK"
-    # Key 38 "snare_drum"
-    SNARE = "SNARE"
-    # Key 48 "high_tom"
-    HI_TOM = "HI-TOM"
-    # Key 45 "mid_tom"
-    MED_TOM = "MED-TOM"
-    # Key 43 "low_tom"
-    LOW_TOM = "LOW-TOM"
-
-    @staticmethod
-    def from_str(s: str) -> "BeatStudioNoteName":
-        for member in BeatStudioNoteName:
-            if member.value == s:
-                return member
-        raise ValueError(f"Invalid Beat Studio note name {s}")
+class TestBeatStudioVelocity:
+    def test_basics(self) -> None:
+        assert BeatStudioVelocity.from_midi(0) is BeatStudioVelocity.LEVEL_0
+        assert BeatStudioVelocity.from_midi(127) is BeatStudioVelocity.LEVEL_9

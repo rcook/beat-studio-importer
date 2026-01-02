@@ -20,7 +20,6 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.note import Velocity
 from typing import Literal, overload
 
 
@@ -47,10 +46,6 @@ def downscale(value: int, source: range, target: range) -> int:
         target_size + target.start
 
     return int(round(scaled_value))
-
-
-def downscale_velocity(velocity: Velocity) -> int:
-    return downscale(velocity, range(0, 128), range(0, 10))
 
 
 # Tempo as quarter notes per minute

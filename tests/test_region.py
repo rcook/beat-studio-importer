@@ -51,7 +51,7 @@ def render_to_lines(region: Region, print_test_case: bool = False) -> list[str]:
 
 class TestRegion:
     def test_basics(self) -> None:
-        source = MidiSource.load(SAMPLES_DIR / "reaper/smf-type-1.mid")
+        source = MidiSource.load(SAMPLES_DIR / "reaper" / "smf-type-1.mid")
         assert len(source.tracks) == 2
 
         note_track = source.tracks[1]
