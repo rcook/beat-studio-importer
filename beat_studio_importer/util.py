@@ -30,10 +30,6 @@ def downscale_velocity(velocity: Velocity) -> int:
     return downscale(velocity, range(0, 128), range(0, 10))
 
 
-# Quarter notes per minute
-def midi_tempo_to_qpm(tempo: int) -> int | float:
-    q, r = divmod(MIDI_TEMPO_BASIS, tempo)
-    if r == 0:
-        return q
-    else:
-        return MIDI_TEMPO_BASIS / tempo
+# Tempo as quarter notes per minute
+def midi_tempo_to_qpm(tempo: int) -> float:
+    return MIDI_TEMPO_BASIS / tempo

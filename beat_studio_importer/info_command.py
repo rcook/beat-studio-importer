@@ -1,7 +1,6 @@
-from beat_studio_importer.import_ui import select_region, select_tracks
+from beat_studio_importer.import_ui import select_tracks
 from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP, NoteNameMap
-from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region import Region
 from beat_studio_importer.ui import print_key_value
 from beat_studio_importer.user_error import UserError
@@ -9,7 +8,7 @@ from colorama import Fore, Style
 from pathlib import Path
 
 
-def do_import(path: Path, note_track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None, region_id: int | None, quantize: NoteValue, name: str | None, override_tempo: int | None) -> None:
+def do_info(path: Path, note_track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
@@ -28,15 +27,19 @@ def do_import(path: Path, note_track_name: str | None, metadata_track_name: str 
         note_name_map,
         source.ticks_per_beat)
 
-    region = select_region(source.path, regions, region_id)
-
-    name = name or f"{source.path.stem} region {region.region_id}"
-    pattern = region.render(name, quantize)
-
-    print_key_value("File", source.path)
     print_key_value("Ticks per beat", source.ticks_per_beat)
-    print()
-
-    print(Fore.LIGHTYELLOW_EX, end="")
-    pattern.print(override_tempo=override_tempo)
-    print(Style.RESET_ALL)
+    for region in regions:
+        print(
+            Fore.LIGHTYELLOW_EX,
+            f"Region {region.region_id}",
+            Style.RESET_ALL,
+            sep="")
+        beat = region.time_signature.basis.value[2]
+        print_key_value("MIDI tempo", region.tempo)
+        print_key_value("Time signature", region.time_signature)
+        print_key_value(
+            "QPM tempo (quarter notes per minute)",
+            f"{region.qpm:.1f}")
+        print_key_value(
+            f"BPM tempo (beats per minute, beat={beat})",
+            f"{region.bpm:.1f}")

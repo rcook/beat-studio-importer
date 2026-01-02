@@ -26,8 +26,8 @@ class BeatStudioPattern:
     steps: int
     hits: Hits
 
-    def print(self, file: "SupportsWrite[str] | None" = None) -> None:
-        print(self._make_header(), file=file)
+    def print(self, file: "SupportsWrite[str] | None" = None, override_tempo: int | None = None) -> None:
+        print(self._make_header(override_tempo=override_tempo), file=file)
         temp = list(map(lambda n: (n, n.value), self.hits.keys()))
         note_names = sorted(temp, key=lambda p: p[1])
         width = max(map(lambda p: len(p[1]), temp))
@@ -40,10 +40,12 @@ class BeatStudioPattern:
     def _velocity_char(velocity: Velocity | None) -> str:
         return "." if velocity is None else str(downscale_velocity(velocity))
 
-    def _make_header(self) -> str:
+    def _make_header(self, override_tempo: int | None) -> str:
         if not all(map(lambda c: c.isprintable(), self.name)):
             raise ValueError(f"Invalid pattern name {self.name}")
 
         encoded_name = self.name.replace("\"", "\\\"")
-        qpm = midi_tempo_to_qpm(self.tempo)
+        qpm = round(midi_tempo_to_qpm(self.tempo)) \
+            if override_tempo is None \
+            else override_tempo
         return f"[\"{encoded_name}\" - {self.steps} - {qpm} - {self.quantize.value} - {self.time_signature}]"

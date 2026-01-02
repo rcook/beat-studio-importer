@@ -29,7 +29,7 @@ class Region:
     notes: list[tuple[Tick, Note]]
 
     @staticmethod
-    def from_midi_messages(note_track: MidiTrack, metadata_track: MidiTrack, note_name_map: NoteNameMap, ticks_per_beat: int) -> "list[Region]":
+    def from_midi_messages(note_track: MidiTrack, metadata_track: MidiTrack, note_name_map: NoteNameMap, ticks_per_beat: int, silently_discard_hit_on_boundary: bool = True) -> "list[Region]":
         def make_region(builder: RegionBuilder, region_id: int) -> Region:
             start_tick = builder.start_tick
 
@@ -83,11 +83,17 @@ class Region:
         assert len(builder.notes) > 0
         assert builder.time_signature is not None
 
-        temp = builder.notes[-1][0]
+        last_note_tick = builder.notes[-1][0]
         ticks_per_bar = builder.time_signature.ticks_per_bar(ticks_per_beat)
-        bars, r = divmod(temp, ticks_per_bar)
-        if r > 0:
+
+        # Handle note hit on boundary
+        bars, r = divmod(last_note_tick, ticks_per_bar)
+        assert bars >= 0 and r >= 0
+        if r == 0 and silently_discard_hit_on_boundary:
+            _ = builder.notes.pop()
+        else:
             bars += 1
+
         builder.end_tick = builder.start_tick + bars * ticks_per_bar
         builder.bars = bars
 
@@ -95,15 +101,23 @@ class Region:
 
     @cached_property
     def descriptor(self) -> Descriptor:
-        qpm = midi_tempo_to_qpm(self.tempo)
-        bpm = self.time_signature.tempo_to_bpm(self.tempo)
         return Descriptor(
             name=None,
-            description=f"{self.start_tick}-{self.end_tick}: {qpm}qpm, {bpm}bpm, {self.time_signature}, {self.bars} bars")
+            description=f"{self.start_tick}-{self.end_tick}: {self.qpm:.1f}qpm, {self.bpm:.1f}bpm, {self.time_signature}, {self.bars} bars")
 
     @cached_property
     def ticks(self) -> int:
         return self.end_tick - self.start_tick
+
+    # Tempo as quarter notes per minute
+    @cached_property
+    def qpm(self) -> float:
+        return midi_tempo_to_qpm(self.tempo)
+
+    # Tempo as basis beats per minute
+    @cached_property
+    def bpm(self) -> float:
+        return self.time_signature.basis.midi_tempo_to_bpm(self.tempo)
 
     def render(self, name: str, quantize: NoteValue) -> BeatStudioPattern:
         ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value)

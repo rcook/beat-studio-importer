@@ -5,6 +5,7 @@
 
 from argparse import ArgumentParser, Namespace
 from beat_studio_importer.import_command import do_import
+from beat_studio_importer.info_command import do_info
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.user_error import UserError
@@ -14,42 +15,83 @@ import sys
 
 
 def do_import_args(args: Namespace) -> None:
-    note_map = None \
+    note_track_name = args.note_track_name
+
+    metadata_track_name = args.metadata_track_name
+    if metadata_track_name is None and note_track_name is not None:
+        metadata_track_name = note_track_name
+
+    note_name_map = None \
         if args.note_name_path is None \
         else NoteNameMap.load(args.note_name_path)
-
-    track_name = args.track_name
-    metadata_track_name = args.metadata_track_name
-    if metadata_track_name is None and track_name is not None:
-        metadata_track_name = track_name
 
     quantize = NoteValue.from_denominator(args.quantize)
 
     do_import(
         path=args.path,
-        note_track_name=track_name,
+        note_track_name=note_track_name,
         metadata_track_name=metadata_track_name,
-        note_name_map=note_map,
+        note_name_map=note_name_map,
         region_id=args.region,
         quantize=quantize,
-        name=args.name)
+        name=args.name,
+        override_tempo=args.override_tempo)
 
 
-def main(cwd: Path, argv: list[str]) -> None:
+def do_info_args(args: Namespace) -> None:
+    note_track_name = args.note_track_name
+
+    metadata_track_name = args.metadata_track_name
+    if metadata_track_name is None and note_track_name is not None:
+        metadata_track_name = note_track_name
+
+    note_name_map = None \
+        if args.note_name_path is None \
+        else NoteNameMap.load(args.note_name_path)
+
+    do_info(
+        path=args.path,
+        note_track_name=note_track_name,
+        metadata_track_name=metadata_track_name,
+        note_name_map=note_name_map)
+
+
+def resolve_path(cwd: Path, s: str) -> Path:
+    return (cwd / Path(s).expanduser()).resolve()
+
+
+def add_path_arg(parser: ArgumentParser, cwd: Path) -> None:
     def resolved_path(s: str) -> Path:
-        return (cwd / Path(s).expanduser()).resolve()
+        return resolve_path(cwd, s)
 
-    parser = ArgumentParser(prog="beat-studio-importer")
-    parsers = parser.add_subparsers(required=True)
-
-    p = parsers.add_parser(name="import")
-    p.set_defaults(func=do_import_args)
-    _ = p.add_argument(
+    _ = parser.add_argument(
         dest="path",
         metavar="PATH",
         type=resolved_path,
         help="path of file to import")
-    _ = p.add_argument(
+
+
+def add_common_args(parser: ArgumentParser, cwd: Path) -> None:
+    def resolved_path(s: str) -> Path:
+        return resolve_path(cwd, s)
+
+    _ = parser.add_argument(
+        "--track",
+        "-t",
+        dest="note_track_name",
+        metavar="NOTE_TRACK_NAME",
+        type=str,
+        default=None,
+        help="track name")
+    _ = parser.add_argument(
+        "--metadata-track",
+        "-m",
+        dest="metadata_track_name",
+        metavar="METADATA_TRACK_NAME",
+        type=str,
+        default=None,
+        help="metadata track name (tempo and time signature track etc.)")
+    _ = parser.add_argument(
         "--note-name-path",
         "-n",
         dest="note_name_path",
@@ -58,22 +100,16 @@ def main(cwd: Path, argv: list[str]) -> None:
         default=None,
         required=False,
         help="path to note name file")
-    _ = p.add_argument(
-        "--track",
-        "-t",
-        dest="track_name",
-        metavar="TRACK_NAME",
-        type=str,
-        default=None,
-        help="track name")
-    _ = p.add_argument(
-        "--metadata-track",
-        "-m",
-        dest="metadata_track_name",
-        metavar="METADATA_TRACK_NAME",
-        type=str,
-        default=None,
-        help="metadata track name (tempo and time signature track etc.)")
+
+
+def main(cwd: Path, argv: list[str]) -> None:
+    parser = ArgumentParser(prog="beat-studio-importer")
+    parsers = parser.add_subparsers(required=True)
+
+    p = parsers.add_parser(name="import")
+    p.set_defaults(func=do_import_args)
+    add_path_arg(p, cwd)
+    add_common_args(p, cwd)
     _ = p.add_argument(
         "--region",
         "-r",
@@ -98,6 +134,18 @@ def main(cwd: Path, argv: list[str]) -> None:
         type=str,
         default=None,
         help="pattern name")
+    _ = p.add_argument(
+        "--tempo",
+        dest="override_tempo",
+        metavar="OVERRIDE_TEMPO",
+        type=int,
+        default=None,
+        help="override tempo in output (to work around Beat Studio tempo bug)")
+
+    p = parsers.add_parser(name="info")
+    p.set_defaults(func=do_info_args)
+    add_path_arg(p, cwd)
+    add_common_args(p, cwd)
 
     args = parser.parse_args(argv)
     result: object = None

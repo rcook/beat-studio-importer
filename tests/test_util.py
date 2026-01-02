@@ -2,7 +2,7 @@ from beat_studio_importer.util import downscale, downscale_velocity
 
 
 class TestDownscale:
-    def test_basics(self):
+    def test_basics(self) -> None:
         def call_downscale(value: int) -> int:
             return downscale(value, range(0, 30), range(0, 10))
 
@@ -39,6 +39,6 @@ class TestDownscale:
 
 
 class TestDownscaleVelocity:
-    def test_basics(self):
+    def test_basics(self) -> None:
         assert downscale_velocity(0) == 0
         assert downscale_velocity(127) == 9
