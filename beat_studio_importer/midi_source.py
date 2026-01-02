@@ -23,10 +23,7 @@
 from dataclasses import dataclass
 from mido import MidiFile, MidiTrack
 from pathlib import Path
-from typing import TypeVar, cast
-
-
-T = TypeVar("T", bound="MidiSource")
+from typing import Self, cast
 
 
 @dataclass(frozen=True)
@@ -37,7 +34,7 @@ class MidiSource:
     tracks: list[MidiTrack]
 
     @classmethod
-    def load(cls: type[T], path: Path) -> T:
+    def load(cls: type[Self], path: Path) -> Self:
         file = MidiFile(path)
         tracks = cast(list[MidiTrack], file.tracks)
         return cls(

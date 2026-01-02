@@ -27,14 +27,11 @@ from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.time_signature import TimeSignature
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Self
 
 
 if TYPE_CHECKING:
     from _typeshed import SupportsWrite
-
-
-T = TypeVar("T", bound="BeatStudioPattern")
 
 
 type Hits = dict[BeatStudioNoteName, list[BeatStudioVelocity | None]]
@@ -50,11 +47,11 @@ class BeatStudioPattern:
     hits: Hits
 
     @classmethod
-    def load(cls: type[T], path: Path) -> list[T]:
+    def load(cls: type[Self], path: Path) -> list[Self]:
         with path.open("rt") as f:
             lines = f.readlines()
 
-        patterns: list[T] = []
+        patterns: list[Self] = []
         header: str | None = None
         pattern_lines: list[str] = []
         for line in lines:
@@ -83,7 +80,7 @@ class BeatStudioPattern:
         return patterns
 
     @classmethod
-    def parse(cls: type[T], s: str) -> T:
+    def parse(cls: type[Self], s: str) -> Self:
         header, *lines = [
             line for line in [
                 line.strip()
@@ -93,7 +90,7 @@ class BeatStudioPattern:
         return cls.read(header, lines)
 
     @classmethod
-    def read(cls: type[T], header: str, lines: list[str]) -> T:
+    def read(cls: type[Self], header: str, lines: list[str]) -> Self:
         def translate_hit_char(c: str) -> BeatStudioVelocity | None:
             return None if c == "." else BeatStudioVelocity(int(c))
 

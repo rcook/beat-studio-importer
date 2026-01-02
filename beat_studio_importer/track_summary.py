@@ -26,10 +26,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from mido import MidiTrack
 from mido.messages import BaseMessage
-from typing import TypeVar, cast
-
-
-T = TypeVar("T", bound="TrackSummary")
+from typing import Self, cast
 
 
 @dataclass(frozen=True)
@@ -41,7 +38,7 @@ class TrackSummary:
     metadata_events: int
 
     @classmethod
-    def summarize(cls: type[T], track: MidiTrack) -> T:
+    def summarize(cls: type[Self], track: MidiTrack) -> Self:
         events = list(map(
             lambda t: t.is_meta,
             cast(Iterable[BaseMessage], track)))

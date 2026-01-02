@@ -24,11 +24,8 @@ from beat_studio_importer.misc import MidiNote
 from beat_studio_importer.note_name import NoteName
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypeVar, cast
+from typing import Self, cast
 import yaml
-
-
-T = TypeVar("T", bound="NoteNameMap")
 
 
 @dataclass(frozen=True)
@@ -37,7 +34,7 @@ class NoteNameMap:
     notes: dict[MidiNote, NoteName]
 
     @classmethod
-    def load(cls: type[T], path: Path) -> T:
+    def load(cls: type[Self], path: Path) -> Self:
         with path.open("rt") as f:
             obj = cast(
                 dict[str, object],

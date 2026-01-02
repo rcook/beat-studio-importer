@@ -32,16 +32,13 @@ from beat_studio_importer.time_signature import TimeSignature
 from beat_studio_importer.timeline import NoteEvent, TempoEvent, TimeSignatureEvent, Timeline
 from dataclasses import dataclass
 from functools import cached_property, reduce
-from typing import TypeVar
+from typing import Self
 
 
 DEFAULT_TEMPO: MidiTempo = MidiTempo(120)
 DEFAULT_TIME_SIGNATURE: TimeSignature = TimeSignature(
     numerator=Numerator(4),
     denominator=NoteValue.QUARTER)
-
-
-T = TypeVar("T", bound="Region")
 
 
 @dataclass(frozen=True)
@@ -56,8 +53,8 @@ class Region:
     bar_count: int
 
     @classmethod
-    def build_all(cls: type[T], timeline: Timeline, discard_boundary_hits: bool = True) -> list[T]:
-        regions: list[T] = []
+    def build_all(cls: type[Self], timeline: Timeline, discard_boundary_hits: bool = True) -> list[Self]:
+        regions: list[Self] = []
         tempo = DEFAULT_TEMPO
         time_signature = DEFAULT_TIME_SIGNATURE
         start_tick = Tick(0)
@@ -166,7 +163,7 @@ class Region:
             hits=all_hits)
 
     @classmethod
-    def _close_region(cls: type[T], timeline: Timeline, tempo: MidiTempo, time_signature: TimeSignature, region_id: RegionId, start_tick: Tick, end_tick: Tick | None, tempo_event: TempoEvent | None, time_signature_event: TimeSignatureEvent | None, note_events: list[NoteEvent], discard_boundary_hits: bool) -> tuple[T | None, MidiTempo, TimeSignature]:
+    def _close_region(cls: type[Self], timeline: Timeline, tempo: MidiTempo, time_signature: TimeSignature, region_id: RegionId, start_tick: Tick, end_tick: Tick | None, tempo_event: TempoEvent | None, time_signature_event: TimeSignatureEvent | None, note_events: list[NoteEvent], discard_boundary_hits: bool) -> tuple[Self | None, MidiTempo, TimeSignature]:
         def reduce_func(end_tick: Tick, note_event: NoteEvent) -> Tick:
             assert note_event.tick >= end_tick
             return max(end_tick, note_event.tick)
