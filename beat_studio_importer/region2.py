@@ -20,6 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.misc import Denominator, MidiTempo, Numerator, RegionId, Tick, TimeSignature2
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.time_signature import TimeSignature
 from beat_studio_importer.timeline import NoteEvent, TempoEvent, TimeSignatureEvent, Timeline
@@ -28,8 +29,8 @@ from functools import reduce
 from typing import TypeVar
 
 
-DEFAULT_TEMPO: int = 120
-DEFAULT_TIME_SIGNATURE: tuple[int, int] = (4, 4)
+DEFAULT_TEMPO: MidiTempo = MidiTempo(120)
+DEFAULT_TIME_SIGNATURE: TimeSignature2 = (Numerator(4), Denominator(4))
 
 
 T = TypeVar("T", bound="Region2")
@@ -37,10 +38,10 @@ T = TypeVar("T", bound="Region2")
 
 @dataclass(frozen=True)
 class Region2:
-    id: int
-    start_tick: int
-    end_tick: int
-    tempo: int
+    id: RegionId
+    start_tick: Tick
+    end_tick: Tick
+    tempo: MidiTempo
     time_signature: TimeSignature
     notes: list[NoteEvent]
 
@@ -49,7 +50,7 @@ class Region2:
         regions: list[T] = []
         tempo = DEFAULT_TEMPO
         time_signature = DEFAULT_TIME_SIGNATURE
-        start_tick = 0
+        start_tick = Tick(0)
         tempo_event: TempoEvent | None = None
         time_signature_event: TimeSignatureEvent | None = None
         note_events: list[NoteEvent] = []
@@ -70,7 +71,7 @@ class Region2:
                                 timeline=timeline,
                                 tempo=tempo,
                                 time_signature=time_signature,
-                                region_id=len(regions),
+                                region_id=RegionId(len(regions)),
                                 start_tick=start_tick,
                                 end_tick=event_tick,
                                 tempo_event=tempo_event,
@@ -93,7 +94,7 @@ class Region2:
             timeline=timeline,
             tempo=tempo,
             time_signature=time_signature,
-            region_id=len(regions),
+            region_id=RegionId(len(regions)),
             start_tick=start_tick,
             end_tick=None,
             tempo_event=tempo_event,
@@ -106,8 +107,8 @@ class Region2:
         return regions
 
     @classmethod
-    def _close_region(cls: type[T], timeline: Timeline, tempo: int, time_signature: tuple[int, int], region_id: int, start_tick: int, end_tick: int | None, tempo_event: TempoEvent | None, time_signature_event: TimeSignatureEvent | None, note_events: list[NoteEvent], discard_boundary_hits: bool) -> tuple[T | None, int, tuple[int, int]]:
-        def reduce_func(end_tick: int, note_event: NoteEvent) -> int:
+    def _close_region(cls: type[T], timeline: Timeline, tempo: MidiTempo, time_signature: tuple[Numerator, Denominator], region_id: RegionId, start_tick: Tick, end_tick: Tick | None, tempo_event: TempoEvent | None, time_signature_event: TimeSignatureEvent | None, note_events: list[NoteEvent], discard_boundary_hits: bool) -> tuple[T | None, MidiTempo, TimeSignature2]:
+        def reduce_func(end_tick: Tick, note_event: NoteEvent) -> Tick:
             assert note_event.tick >= end_tick
             return max(end_tick, note_event.tick)
 
@@ -143,7 +144,7 @@ class Region2:
         else:
             bar_count += 1
 
-        end_tick = start_tick + bar_count * ticks_per_bar
+        end_tick = Tick(start_tick + bar_count * ticks_per_bar)
 
         region = cls(
             id=region_id,
