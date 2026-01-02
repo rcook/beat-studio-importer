@@ -15,3 +15,8 @@ dev = [
   "types-colorama",
   "types-pyyaml",
 ]
+
+[tool.setuptools]
+py-modules = [
+  "beat_studio_importer",
+]
