@@ -18,7 +18,10 @@ import sys
 def do_import_args(args: Namespace) -> None:
     note_track_name = checked_cast(str, args.note_track_name, optional=True)
 
-    metadata_track_name = checked_cast(str, None, optional=True)
+    metadata_track_name = checked_cast(
+        str,
+        args.metadata_track_name,
+        optional=True)
     if metadata_track_name is None and note_track_name is not None:
         metadata_track_name = note_track_name
 
@@ -42,7 +45,10 @@ def do_import_args(args: Namespace) -> None:
 def do_info_args(args: Namespace) -> None:
     note_track_name = checked_cast(str, args.note_track_name, optional=True)
 
-    metadata_track_name = checked_cast(str, None, optional=True)
+    metadata_track_name = checked_cast(
+        str,
+        args.metadata_track_name,
+        optional=True)
     if metadata_track_name is None and note_track_name is not None:
         metadata_track_name = note_track_name
 
