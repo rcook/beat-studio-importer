@@ -25,7 +25,7 @@
 from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
-from beat_studio_importer.misc import BeatStudioTempo, RegionId
+from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.typing_util import checked_cast
@@ -40,16 +40,21 @@ def do_import_args(args: Namespace) -> None:
         if args.note_name_path is None \
         else NoteNameMap.load(checked_cast(Path, args.note_name_path))
 
-    temp0 = checked_cast(int, args.region, optional=True)
-    region_id = None if temp0 is None else RegionId(temp0)
+    temp0 = checked_cast(int, args.channel, optional=True)
+    channel = None if temp0 is None else MidiChannel(temp0)
+
+    temp1 = checked_cast(int, args.region, optional=True)
+    region_id = None if temp1 is None else RegionId(temp1)
+
     quantize = NoteValue.from_int(checked_cast(int, args.quantize))
 
-    temp1 = checked_cast(int, args.override_tempo, optional=True)
-    override_tempo = None if temp1 is None else BeatStudioTempo(temp1)
+    temp2 = checked_cast(int, args.override_tempo, optional=True)
+    override_tempo = None if temp2 is None else BeatStudioTempo(temp2)
 
     do_import(
         path=checked_cast(Path, args.path),
         note_name_map=note_name_map,
+        channel=channel,
         region_id=region_id,
         quantize=quantize,
         name=checked_cast(str, args.name, optional=True),
@@ -100,6 +105,15 @@ def main(cwd: Path, argv: list[str]) -> None:
     p.set_defaults(func=do_import_args)
     add_path_arg(p, cwd)
     add_note_map_path_arg(p, cwd)
+    _ = p.add_argument(
+        "--channel",
+        "-c",
+        dest="channel",
+        metavar="CHANNEL",
+        type=int,
+        choices=range(1, 17),
+        default=10,
+        help="MIDI channel")
     _ = p.add_argument(
         "--region",
         "-r",

@@ -10,6 +10,7 @@ python \
     ./beat-studio-importer.py \
     import \
     samples/example-1.mid \
+    --channel 10 \
     --region 2 \
     --quantize 16 \
     --add

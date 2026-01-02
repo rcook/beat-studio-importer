@@ -194,15 +194,18 @@ class Region:
             timeline.ticks_per_beat)
 
         # Handle note hit on boundary
-        bar_count, r = divmod(end_tick - start_tick, ticks_per_bar)
-        assert bar_count >= 0 and r >= 0
-        if r == 0 and discard_boundary_hits:
-            e = note_events[-1]
-            assert e.tick <= end_tick
-            if e.tick >= end_tick:
-                e = note_events.pop()
+        if len(note_events) > 0:
+            bar_count, r = divmod(end_tick - start_tick, ticks_per_bar)
+            assert bar_count >= 0 and r >= 0
+            if r == 0 and discard_boundary_hits:
+                e = note_events[-1]
+                assert e.tick <= end_tick
+                if e.tick >= end_tick:
+                    e = note_events.pop()
+            else:
+                bar_count += 1
         else:
-            bar_count += 1
+            bar_count = 1
 
         end_tick = Tick(start_tick + bar_count * ticks_per_bar)
 

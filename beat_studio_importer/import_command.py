@@ -25,7 +25,7 @@ from beat_studio_importer.beat_studio_util import default_beat_studio_profile
 from beat_studio_importer.import_ui import select_region
 from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.midi_util import summarize_midi_file
-from beat_studio_importer.misc import BeatStudioTempo, RegionId
+from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
 from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP, NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region import Region
@@ -35,7 +35,7 @@ from colorama import Fore, Style
 from pathlib import Path
 
 
-def do_import(path: Path, note_name_map: NoteNameMap | None, region_id: RegionId | None, quantize: NoteValue, name: str | None, override_tempo: BeatStudioTempo | None, add: bool = False) -> None:
+def do_import(path: Path, note_name_map: NoteNameMap | None, channel: MidiChannel | None, region_id: RegionId | None, quantize: NoteValue, name: str | None, override_tempo: BeatStudioTempo | None, add: bool = False) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
@@ -44,7 +44,7 @@ def do_import(path: Path, note_name_map: NoteNameMap | None, region_id: RegionId
     summarize_midi_file(source.file)
     print()
 
-    timeline = Timeline.build(source.file)
+    timeline = Timeline.build(source.file, channel=channel)
     regions = Region.build_all(timeline)
     region = select_region(source.path, regions, region_id)
 
