@@ -20,7 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.midi_types import MidiVelocity
+from beat_studio_importer.misc import MidiVelocity
 from beat_studio_importer.note_name import NoteName
 from dataclasses import dataclass
 

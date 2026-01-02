@@ -21,7 +21,7 @@
 #
 
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
-from beat_studio_importer.midi_types import MidiVelocity
+from beat_studio_importer.misc import MidiVelocity
 
 
 class TestBeatStudioVelocity:

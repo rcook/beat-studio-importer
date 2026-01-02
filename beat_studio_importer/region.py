@@ -26,7 +26,7 @@ from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.descriptor import Descriptor
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
-from beat_studio_importer.midi_types import MidiVelocity
+from beat_studio_importer.misc import MidiVelocity
 from beat_studio_importer.note import Note
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
