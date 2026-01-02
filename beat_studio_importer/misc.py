@@ -34,6 +34,3 @@ Numerator = NewType("Numerator", int)
 Qpm = NewType("Qpm", Fraction)
 RegionId = NewType("RegionId", int)
 Tick = NewType("Tick", int)
-
-
-type TimeSignature2 = tuple[Numerator, Denominator]

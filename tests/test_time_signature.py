@@ -21,7 +21,7 @@
 #
 
 from beat_studio_importer.basis import Basis
-from beat_studio_importer.misc import MidiTempo
+from beat_studio_importer.misc import MidiTempo, Numerator
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.time_signature import TimeSignature
 from tests.util import is_close_tempo
@@ -30,7 +30,7 @@ import pytest
 
 class TestTimeSignature:
     def test_three_four(self) -> None:
-        time_signature = TimeSignature(3, NoteValue.QUARTER)
+        time_signature = TimeSignature(Numerator(3), NoteValue.QUARTER)
         assert is_close_tempo(
             120,
             time_signature.midi_tempo_to_bpm(MidiTempo(500_000)))
@@ -39,7 +39,7 @@ class TestTimeSignature:
             time_signature.midi_tempo_to_bpm(MidiTempo(1_000_000)))
 
     def test_four_four(self) -> None:
-        time_signature = TimeSignature(4, NoteValue.QUARTER)
+        time_signature = TimeSignature(Numerator(4), NoteValue.QUARTER)
         assert is_close_tempo(
             120,
             time_signature.midi_tempo_to_bpm(MidiTempo(500_000)))
@@ -48,7 +48,7 @@ class TestTimeSignature:
             time_signature.midi_tempo_to_bpm(MidiTempo(1_000_000)))
 
     def test_seven_eight(self) -> None:
-        time_signature = TimeSignature(7, NoteValue.EIGHTH)
+        time_signature = TimeSignature(Numerator(7), NoteValue.EIGHTH)
         assert is_close_tempo(
             240,
             time_signature.midi_tempo_to_bpm(MidiTempo(500_000)))
@@ -57,7 +57,7 @@ class TestTimeSignature:
             time_signature.midi_tempo_to_bpm(MidiTempo(1_000_000)))
 
     def test_twelve_eight(self) -> None:
-        time_signature = TimeSignature(7, NoteValue.EIGHTH)
+        time_signature = TimeSignature(Numerator(7), NoteValue.EIGHTH)
         assert is_close_tempo(
             240,
             time_signature.midi_tempo_to_bpm(MidiTempo(500_000)))
@@ -88,7 +88,7 @@ class TestTimeSignature:
         (8, NoteValue.EIGHTH, Basis.EIGHTH),
         (7, NoteValue.SIXTEENTH, Basis.SIXTEENTH)
     ])
-    def test_basis(self, numerator: int, denominator: NoteValue, expected: Basis) -> None:
+    def test_basis(self, numerator: Numerator, denominator: NoteValue, expected: Basis) -> None:
         time_signature = TimeSignature(
             numerator=numerator,
             denominator=denominator)

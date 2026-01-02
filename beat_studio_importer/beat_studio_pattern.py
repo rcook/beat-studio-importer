@@ -22,6 +22,7 @@
 
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
+from beat_studio_importer.misc import Numerator
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.time_signature import TimeSignature
 from dataclasses import dataclass
@@ -122,7 +123,7 @@ class BeatStudioPattern:
         if len(parts) != 2:
             raise ValueError(f"Invalid header {header}")
 
-        numerator = int(parts[0])
+        numerator = Numerator(int(parts[0]))
         denominator = NoteValue.from_int(int(parts[1]))
         time_signature = TimeSignature(
             numerator=numerator,

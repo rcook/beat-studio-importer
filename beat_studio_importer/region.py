@@ -24,7 +24,7 @@ from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.descriptor import Descriptor
-from beat_studio_importer.misc import Bpm, Denominator, MidiTempo, Numerator, Qpm, RegionId, Tick, TimeSignature2
+from beat_studio_importer.misc import Bpm, MidiTempo, Numerator, Qpm, RegionId, Tick
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.tempo_util import midi_tempo_to_qpm
@@ -36,7 +36,9 @@ from typing import TypeVar
 
 
 DEFAULT_TEMPO: MidiTempo = MidiTempo(120)
-DEFAULT_TIME_SIGNATURE: TimeSignature2 = (Numerator(4), Denominator(4))
+DEFAULT_TIME_SIGNATURE: TimeSignature = TimeSignature(
+    numerator=Numerator(4),
+    denominator=NoteValue.QUARTER)
 
 
 T = TypeVar("T", bound="Region")
@@ -164,7 +166,7 @@ class Region:
             hits=all_hits)
 
     @classmethod
-    def _close_region(cls: type[T], timeline: Timeline, tempo: MidiTempo, time_signature: tuple[Numerator, Denominator], region_id: RegionId, start_tick: Tick, end_tick: Tick | None, tempo_event: TempoEvent | None, time_signature_event: TimeSignatureEvent | None, note_events: list[NoteEvent], discard_boundary_hits: bool) -> tuple[T | None, MidiTempo, TimeSignature2]:
+    def _close_region(cls: type[T], timeline: Timeline, tempo: MidiTempo, time_signature: TimeSignature, region_id: RegionId, start_tick: Tick, end_tick: Tick | None, tempo_event: TempoEvent | None, time_signature_event: TimeSignatureEvent | None, note_events: list[NoteEvent], discard_boundary_hits: bool) -> tuple[T | None, MidiTempo, TimeSignature]:
         def reduce_func(end_tick: Tick, note_event: NoteEvent) -> Tick:
             assert note_event.tick >= end_tick
             return max(end_tick, note_event.tick)
@@ -182,16 +184,15 @@ class Region:
             temp_time_signature = time_signature
         else:
             assert time_signature_event.tick == start_tick
-            temp_time_signature = time_signature_event.numerator, time_signature_event.denominator
-
-        temp = TimeSignature(
-            numerator=temp_time_signature[0],
-            denominator=NoteValue.from_int(temp_time_signature[1]))
+            temp_time_signature = TimeSignature(
+                numerator=time_signature_event.numerator,
+                denominator=NoteValue.from_int(time_signature_event.denominator))
 
         if end_tick is None:
             end_tick = reduce(reduce_func, note_events, start_tick)
 
-        ticks_per_bar = temp.ticks_per_bar(timeline.ticks_per_beat)
+        ticks_per_bar = temp_time_signature.ticks_per_bar(
+            timeline.ticks_per_beat)
 
         # Handle note hit on boundary
         bar_count, r = divmod(end_tick - start_tick, ticks_per_bar)
@@ -212,7 +213,7 @@ class Region:
             start_tick=start_tick,
             end_tick=end_tick,
             tempo=temp_tempo,
-            time_signature=temp,
+            time_signature=temp_time_signature,
             notes=note_events,
             bar_count=bar_count)
         return region, temp_tempo, temp_time_signature

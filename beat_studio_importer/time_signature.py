@@ -20,59 +20,18 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-# pyright: reportAttributeAccessIssue=false
-# pyright: reportUnknownVariableType=false
-
 from beat_studio_importer.basis import Basis
-from beat_studio_importer.misc import Bpm, MidiTempo
+from beat_studio_importer.misc import Bpm, MidiTempo, Numerator
 from beat_studio_importer.note_value import NoteValue
 from dataclasses import dataclass
 from functools import cached_property
-from mido import MetaMessage
-from typing import TypeVar, cast, override
-
-
-DEFAULT_CLOCKS_PER_CLICK: int = 24
-DEFAULT_NOTATED_32ND_NOTES_PER_BEAT: int = 8
-
-
-T = TypeVar("T", bound="TimeSignature")
+from typing import override
 
 
 @dataclass(frozen=True)
 class TimeSignature:
-    numerator: int
+    numerator: Numerator
     denominator: NoteValue
-    clocks_per_click: int = DEFAULT_CLOCKS_PER_CLICK
-    notated_32nd_notes_per_beat: int = DEFAULT_NOTATED_32ND_NOTES_PER_BEAT
-
-    @classmethod
-    def from_midi_message(cls: type[T], message: MetaMessage) -> T:
-        if cast(str, message.type) != "time_signature":
-            raise ValueError(f"Invalid MIDI time signature message {message}")
-
-        numerator = cast(int, message.numerator)
-        if numerator < 1:
-            raise ValueError(f"Invalid numerator {numerator}")
-
-        denominator = NoteValue.from_int(
-            cast(int, message.denominator))
-
-        # What do I do if this isn't 24?
-        clocks_per_tick = cast(int, message.clocks_per_click)
-        assert clocks_per_tick == DEFAULT_CLOCKS_PER_CLICK
-
-        # What do I do if this isn't 8?
-        notated_32nd_notes_per_beat = cast(
-            int,
-            message.notated_32nd_notes_per_beat)
-        assert notated_32nd_notes_per_beat == DEFAULT_NOTATED_32ND_NOTES_PER_BEAT
-
-        return cls(
-            numerator=numerator,
-            denominator=denominator,
-            clocks_per_click=clocks_per_tick,
-            notated_32nd_notes_per_beat=notated_32nd_notes_per_beat)
 
     @override
     def __repr__(self) -> str:
@@ -105,8 +64,3 @@ class TimeSignature:
     # Tempo as basis beats per minute
     def midi_tempo_to_bpm(self, tempo: MidiTempo) -> Bpm:
         return self.basis.midi_tempo_to_bpm(tempo)
-
-
-DEFAULT_TIME_SIGNATURE: TimeSignature = TimeSignature(
-    numerator=4,
-    denominator=NoteValue.QUARTER)
