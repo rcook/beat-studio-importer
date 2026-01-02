@@ -20,23 +20,12 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.tempo_util import midi_tempo_to_qpm
-from enum import Enum, auto, unique
 from fractions import Fraction
 
 
-@unique
-class Basis(Enum):
-    SIXTEENTH = auto(), Fraction(1, 4), "sixteenth"
-    EIGHTH = auto(), Fraction(1, 2), "eighth"
-    DOTTED_EIGHTH = auto(), Fraction(3, 4), "dotted eighth"
-    QUARTER = auto(), 1, "quarter"
-    DOTTED_QUARTER = auto(), Fraction(3, 2), "dotted quarter"
-    HALF = auto(), 2, "half"
-    WHOLE = auto(), 4, "whole"
+MIDI_TEMPO_BASIS: int = 60_000_000
 
-    # Tempo as basis beats per minute
-    def midi_tempo_to_bpm(self, tempo: int) -> Fraction:
-        qpm = midi_tempo_to_qpm(tempo)
-        multiplier = self.value[1]
-        return qpm / multiplier
+
+# Tempo as quarter notes per minute
+def midi_tempo_to_qpm(tempo: int) -> Fraction:
+    return Fraction(MIDI_TEMPO_BASIS, tempo)

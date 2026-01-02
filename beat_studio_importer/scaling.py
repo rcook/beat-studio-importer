@@ -20,23 +20,23 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.tempo_util import midi_tempo_to_qpm
-from enum import Enum, auto, unique
-from fractions import Fraction
+def is_valid_scale(range: range) -> bool:
+    return range.stop >= range.start and range.step == 1
 
 
-@unique
-class Basis(Enum):
-    SIXTEENTH = auto(), Fraction(1, 4), "sixteenth"
-    EIGHTH = auto(), Fraction(1, 2), "eighth"
-    DOTTED_EIGHTH = auto(), Fraction(3, 4), "dotted eighth"
-    QUARTER = auto(), 1, "quarter"
-    DOTTED_QUARTER = auto(), Fraction(3, 2), "dotted quarter"
-    HALF = auto(), 2, "half"
-    WHOLE = auto(), 4, "whole"
+def downscale(value: int, source: range, target: range) -> int:
+    if not is_valid_scale(source):
+        raise ValueError(f"Invalid source range {source}")
+    if not is_valid_scale(target):
+        raise ValueError(f"Invalid target range {target}")
 
-    # Tempo as basis beats per minute
-    def midi_tempo_to_bpm(self, tempo: int) -> Fraction:
-        qpm = midi_tempo_to_qpm(tempo)
-        multiplier = self.value[1]
-        return qpm / multiplier
+    if value not in source:
+        raise ValueError(f"Value {value} is outside source range {source}")
+
+    source_size = source.stop - source.start - 1
+    target_size = target.stop - target.start - 1
+
+    scaled_value = ((value - source.start) / source_size) * \
+        target_size + target.start
+
+    return int(round(scaled_value))

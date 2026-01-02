@@ -21,13 +21,13 @@
 #
 
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
+from beat_studio_importer.beat_studio_util import default_patterns_beat_path
 from beat_studio_importer.import_ui import select_region, select_tracks
 from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP, NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region import Region
 from beat_studio_importer.ui import print_key_value
-from beat_studio_importer.util import default_patterns_beat_path
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from pathlib import Path

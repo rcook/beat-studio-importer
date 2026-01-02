@@ -20,40 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from fractions import Fraction
-from os import getenv
-from pathlib import Path
 from typing import Literal, overload
-
-
-MIDI_TEMPO_BASIS: int = 60_000_000
-
-
-def is_valid_scale(range: range) -> bool:
-    return range.stop >= range.start and range.step == 1
-
-
-def downscale(value: int, source: range, target: range) -> int:
-    if not is_valid_scale(source):
-        raise ValueError(f"Invalid source range {source}")
-    if not is_valid_scale(target):
-        raise ValueError(f"Invalid target range {target}")
-
-    if value not in source:
-        raise ValueError(f"Value {value} is outside source range {source}")
-
-    source_size = source.stop - source.start - 1
-    target_size = target.stop - target.start - 1
-
-    scaled_value = ((value - source.start) / source_size) * \
-        target_size + target.start
-
-    return int(round(scaled_value))
-
-
-# Tempo as quarter notes per minute
-def midi_tempo_to_qpm(tempo: int) -> Fraction:
-    return Fraction(MIDI_TEMPO_BASIS, tempo)
 
 
 @overload
@@ -78,15 +45,3 @@ def checked_cast[T](cls: type[T], value: object, optional: bool = False) -> T | 
         return value
     raise AssertionError(
         f"Value {value} of type {type(value)} is not of required type {cls}")
-
-
-def default_patterns_beat_path() -> Path:
-    s = getenv("LOCALAPPDATA")
-    if s is None:
-        raise RuntimeError("LOCALAPPDATA is not defined")
-
-    path = Path(s).resolve() / "Beat Studio" / "patterns.beat"
-    if not path.is_file():
-        raise RuntimeError(f"Configuration file {path} not found")
-
-    return path

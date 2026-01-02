@@ -30,8 +30,8 @@ from beat_studio_importer.note import MidiVelocity, Note
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region_builder import RegionBuilder, Tick
+from beat_studio_importer.tempo_util import midi_tempo_to_qpm
 from beat_studio_importer.time_signature import TimeSignature
-from beat_studio_importer.util import midi_tempo_to_qpm
 from collections.abc import Iterable
 from dataclasses import dataclass
 from fractions import Fraction

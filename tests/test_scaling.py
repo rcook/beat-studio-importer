@@ -20,7 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.util import downscale
+from beat_studio_importer.scaling import downscale
 
 
 class TestDownscale:

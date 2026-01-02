@@ -21,7 +21,7 @@
 #
 
 from beat_studio_importer.note import MidiVelocity
-from beat_studio_importer.util import downscale
+from beat_studio_importer.scaling import downscale
 from enum import IntEnum, unique
 
 
