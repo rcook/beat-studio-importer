@@ -72,18 +72,28 @@ class BeatStudioPattern:
                     assert len(pattern_lines) == 0
                     header = s
                 else:
-                    patterns.append(cls.parse(header, pattern_lines))
+                    patterns.append(cls.read(header, pattern_lines))
                     header = s
                     pattern_lines.clear()
             else:
                 pattern_lines.append(s)
 
         if header is not None:
-            patterns.append(cls.parse(header, pattern_lines))
+            patterns.append(cls.read(header, pattern_lines))
         return patterns
 
     @classmethod
-    def parse(cls: type[T], header: str, lines: list[str]) -> T:
+    def parse(cls: type[T], s: str) -> T:
+        header, *lines = [
+            line for line in [
+                line.strip()
+                for line in s.splitlines()
+            ] if len(line) > 0
+        ]
+        return cls.read(header, lines)
+
+    @classmethod
+    def read(cls: type[T], header: str, lines: list[str]) -> T:
         def translate_hit_char(c: str) -> BeatStudioVelocity | None:
             if c == ".":
                 return None
@@ -127,11 +137,11 @@ class BeatStudioPattern:
         for line in lines:
             parts = line.split(":")
             if len(parts) != 2:
-                raise ValueError("Invalid pattern")
+                raise ValueError(f"Invalid pattern {line}")
             note_name = BeatStudioNoteName.from_str(parts[0].strip())
             temp = parts[1].strip()
             if len(temp) != steps:
-                raise ValueError("Invalid pattern")
+                raise ValueError(f"Invalid pattern {line}")
 
             hits[note_name] = [translate_hit_char(c) for c in temp]
 
@@ -141,7 +151,7 @@ class BeatStudioPattern:
             time_signature=time_signature,
             quantize=quantize,
             steps=steps,
-            hitsx=hits)
+            hits=hits)
 
     def print(self, file: "SupportsWrite[str] | None" = None, override_tempo: int | None = None) -> None:
         print(self._make_header(override_tempo=override_tempo), file=file)
