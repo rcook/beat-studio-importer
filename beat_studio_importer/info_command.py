@@ -20,6 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
 from beat_studio_importer.beat_studio_util import default_beat_studio_profile
 from beat_studio_importer.import_ui import select_tracks
 from beat_studio_importer.midi_source import MidiSource
@@ -50,8 +51,18 @@ def show_beat_studio_info() -> None:
         cprint(Fore.LIGHTRED_EX, "Cannot find Beat Studio profile")
     else:
         print_key_value("Beat Studio profile directory", profile[0])
-        if profile[1] is not None:
-            print_key_value("Beat Studio patterns file", profile[1])
+
+        patterns_path = profile[1]
+        if patterns_path is not None:
+            print_key_value("Beat Studio patterns file", patterns_path)
+
+            patterns = BeatStudioPattern.load(patterns_path)
+            if len(patterns) > 0:
+                cprint(Fore.LIGHTBLUE_EX, "Available patterns:")
+                for pattern in sorted(patterns, key=lambda p: p.name):
+                    cprint("  ", Fore.LIGHTCYAN_EX, pattern.name)
+
+    print()
 
 
 def show_file_info(path: Path, note_track_name: str | None, metadata_track_name: str | None, note_name_map: NoteNameMap | None) -> None:
