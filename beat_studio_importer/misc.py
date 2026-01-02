@@ -24,6 +24,7 @@ from fractions import Fraction
 from typing import NewType
 
 
+BeatStudioTempo = NewType("BeatStudioTempo", int)
 Bpm = NewType("Bpm", Fraction)
 Denominator = NewType("Denominator", int)
 MidiChannel = NewType("MidiChannel", int)

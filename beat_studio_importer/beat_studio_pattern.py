@@ -22,7 +22,7 @@
 
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
-from beat_studio_importer.misc import Numerator
+from beat_studio_importer.misc import BeatStudioTempo, Numerator
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.time_signature import TimeSignature
 from dataclasses import dataclass
@@ -40,7 +40,7 @@ type Hits = dict[BeatStudioNoteName, list[BeatStudioVelocity | None]]
 @dataclass(frozen=True)
 class BeatStudioPattern:
     name: str
-    qpm: int
+    tempo: BeatStudioTempo  # Is this QPM, BPM or something else?
     time_signature: TimeSignature
     quantize: NoteValue
     steps: int
@@ -113,7 +113,7 @@ class BeatStudioPattern:
             raise ValueError(f"Invalid header {header}")
 
         steps = int(parts[0])
-        qpm = int(parts[1])
+        tempo = BeatStudioTempo(int(parts[1]))
         quantize = NoteValue.from_int(int(parts[2]))
 
         parts = parts[3].split("/")
@@ -141,7 +141,7 @@ class BeatStudioPattern:
 
         return cls(
             name=name,
-            qpm=qpm,
+            tempo=tempo,
             time_signature=time_signature,
             quantize=quantize,
             steps=steps,
@@ -166,4 +166,4 @@ class BeatStudioPattern:
             raise ValueError(f"Invalid pattern name {self.name}")
 
         encoded_name = self.name.replace("\"", "\\\"")
-        return f"[\"{encoded_name}\" - {self.steps} - {self.qpm} - {self.quantize.value[0]} - {self.time_signature}]"
+        return f"[\"{encoded_name}\" - {self.steps} - {self.tempo} - {self.quantize.value[0]} - {self.time_signature}]"

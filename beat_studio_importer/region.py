@@ -24,7 +24,7 @@ from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.descriptor import Descriptor
-from beat_studio_importer.misc import Bpm, MidiTempo, Numerator, Qpm, RegionId, Tick
+from beat_studio_importer.misc import BeatStudioTempo, Bpm, MidiTempo, Numerator, Qpm, RegionId, Tick
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.tempo_util import midi_tempo_to_qpm
@@ -129,7 +129,7 @@ class Region:
     def bpm(self) -> Bpm:
         return self.time_signature.pulse.midi_tempo_to_bpm(self.tempo)
 
-    def render(self, name: str, note_name_map: NoteNameMap,  quantize: NoteValue, override_tempo: int | None = None) -> BeatStudioPattern:
+    def render(self, name: str, note_name_map: NoteNameMap,  quantize: NoteValue, override_tempo: BeatStudioTempo | None = None) -> BeatStudioPattern:
         ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value[0])
         assert r == 0
 
@@ -150,13 +150,15 @@ class Region:
             hits = all_hits[key]
             hits[step] = BeatStudioVelocity.from_midi_velocity(e.velocity)
 
-        qpm = round(midi_tempo_to_qpm(self.tempo)) \
+        # What is Beat Studio tempo? QPM, BPM or something else?
+        # Assume it's supposed to be QPM for now
+        tempo = BeatStudioTempo(round(midi_tempo_to_qpm(self.tempo))) \
             if override_tempo is None \
             else override_tempo
 
         return BeatStudioPattern(
             name=name,
-            qpm=qpm,
+            tempo=tempo,
             time_signature=self.time_signature,
             quantize=quantize,
             steps=steps,

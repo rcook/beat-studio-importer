@@ -28,7 +28,7 @@
 from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
-from beat_studio_importer.misc import RegionId
+from beat_studio_importer.misc import BeatStudioTempo, RegionId
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.typing_util import checked_cast
@@ -43,9 +43,12 @@ def do_import_args(args: Namespace) -> None:
         if args.note_name_path is None \
         else NoteNameMap.load(checked_cast(Path, args.note_name_path))
 
-    temp = checked_cast(int, args.region, optional=True)
-    region_id = None if temp is None else RegionId(temp)
+    temp0 = checked_cast(int, args.region, optional=True)
+    region_id = None if temp0 is None else RegionId(temp0)
     quantize = NoteValue.from_int(checked_cast(int, args.quantize))
+
+    temp1 = checked_cast(int, args.override_tempo, optional=True)
+    override_tempo = None if temp1 is None else BeatStudioTempo(temp1)
 
     do_import(
         path=checked_cast(Path, args.path),
@@ -53,7 +56,7 @@ def do_import_args(args: Namespace) -> None:
         region_id=region_id,
         quantize=quantize,
         name=checked_cast(str, args.name, optional=True),
-        override_tempo=checked_cast(int, args.override_tempo, optional=True),
+        override_tempo=override_tempo,
         add=checked_cast(bool, args.add))
 
 
