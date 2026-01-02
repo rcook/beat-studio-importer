@@ -25,4 +25,7 @@ import math
 
 
 def is_close_tempo(expected: int, actual: Fraction) -> bool:
-    return math.isclose(expected, actual, rel_tol=1e-5)
+    if actual.is_integer():
+        return expected == int(actual)
+    else:
+        return math.isclose(expected, actual, rel_tol=1e-5)
