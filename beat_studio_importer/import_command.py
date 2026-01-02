@@ -22,12 +22,16 @@
 
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
 from beat_studio_importer.beat_studio_util import default_patterns_beat_path
+from beat_studio_importer.features import NEW_TIMELINE_FEATURE_ENABLED
 from beat_studio_importer.import_ui import select_region, select_tracks
 from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.midi_util import summarize_midi_file
 from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP, NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region import Region
+from beat_studio_importer.region2 import Region2
+from beat_studio_importer.timeline import Timeline
+from beat_studio_importer.ui import cprint
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from pathlib import Path
@@ -41,6 +45,17 @@ def do_import(path: Path, note_track_name: str | None, metadata_track_name: str 
 
     summarize_midi_file(source.file)
     print()
+
+    if NEW_TIMELINE_FEATURE_ENABLED:
+        timeline = Timeline.build(source.file)
+        new_regions = Region2.build_all(timeline)
+        for r in new_regions:
+            cprint(
+                Fore.LIGHTYELLOW_EX,
+                f"Region ID {r.id}: {r.start_tick}-{r.end_tick}, tempo {r.tempo}, time_signature {r.time_signature}")
+            for note in r.notes:
+                cprint(Fore.LIGHTBLUE_EX, f"  {note}")
+        print()
 
     note_track, metadata_track = select_tracks(
         source.path,

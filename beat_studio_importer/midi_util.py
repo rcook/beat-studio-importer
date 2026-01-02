@@ -44,9 +44,9 @@ def summarize_midi_file(file: MidiFile) -> None:
                 message_counts[message_type] = 1
             else:
                 message_counts[message_type] += 1
-            value = cast(int | None, getattr(m, "channel", None))
-            if value is not None:
-                midi_channel = value + 1
+            raw_channel = cast(int | None, getattr(m, "channel", None))
+            if raw_channel is not None:
+                midi_channel = raw_channel + 1
                 midi_channels.add(midi_channel)
 
     print_key_value("File", cast(Path, file.filename))
@@ -57,8 +57,8 @@ def summarize_midi_file(file: MidiFile) -> None:
         cprint("  ", Fore.LIGHTCYAN_EX, track_name)
 
     cprint(Fore.LIGHTBLUE_EX, "MIDI channels:")
-    for value in sorted(midi_channels):
-        cprint("  ", Fore.LIGHTCYAN_EX, value)
+    for raw_channel in sorted(midi_channels):
+        cprint("  ", Fore.LIGHTCYAN_EX, raw_channel)
 
     with Table(("MIDI message", Fore.LIGHTYELLOW_EX, "{}", Fore.LIGHTBLUE_EX), ("count", Fore.LIGHTYELLOW_EX, "{:>5}", Fore.LIGHTCYAN_EX), column_sep="  ") as table:
         for message_type in sorted(message_counts.keys()):
