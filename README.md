@@ -49,9 +49,9 @@ time too. This program was tested against Beat Studio version
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -e .[dev]
-pytest
 mypy .
 basedpyright
+pytest
 ```
 
 ## Licence
