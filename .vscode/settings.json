@@ -5,6 +5,7 @@
     "**/__pycache__/": true,
     "**/*.egg-info/": true,
     "**/*.pyc": true,
+    "**/.pytest_cache/": true,
     "**/.mypy_cache/": true,
     "**/build/": true,
   },
