@@ -30,11 +30,10 @@ from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.tempo_util import midi_tempo_to_qpm
 from beat_studio_importer.time_signature import TimeSignature
 from beat_studio_importer.timeline import NoteEvent, TempoEvent, TimeSignatureEvent, Timeline
+from beat_studio_importer.user_error import UserError
 from dataclasses import dataclass
 from functools import cached_property, reduce
 from typing import Self
-
-from beat_studio_importer.user_error import UserError
 
 
 DEFAULT_TEMPO: MidiTempo = MidiTempo(120)
