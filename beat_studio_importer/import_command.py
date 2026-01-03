@@ -20,7 +20,6 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from typing import TYPE_CHECKING
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
 from beat_studio_importer.beat_studio_util import default_beat_studio_profile
 from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
@@ -35,11 +34,29 @@ from beat_studio_importer.timeline import Timeline
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from datetime import datetime, timezone
+from enum import Enum, auto, unique
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
     from _typeshed import SupportsWrite
+
+
+@unique
+class PatternInfo(Enum):
+    IDENTICAL_PATTERN_DEFINED = auto()
+    PATTERN_NAME_IN_USE = auto()
+
+    @staticmethod
+    def find_existing(patterns_path: Path, pattern: BeatStudioPattern) -> "PatternInfo | None":
+        patterns = BeatStudioPattern.load(patterns_path)
+        for p in patterns:
+            if pattern == p:
+                return PatternInfo.IDENTICAL_PATTERN_DEFINED
+            if pattern.name.lower() == p.name.lower():
+                return PatternInfo.PATTERN_NAME_IN_USE
+        return None
 
 
 def do_import(path: Path, note_name_map: NoteNameMap | None, channel: MidiChannel | None, region_id: RegionId | None, quantize: NoteValue, name: str | None, override_tempo: BeatStudioTempo | None, repeat: int | None, add: bool, args: list[tuple[str, str]]) -> None:
@@ -77,33 +94,46 @@ def do_import(path: Path, note_name_map: NoteNameMap | None, channel: MidiChanne
         if patterns_path is None:
             raise UserError("Cannot find Beat Studio patterns file")
 
-        if is_existing_pattern(patterns_path, pattern):
-            print(
-                Fore.WHITE,
-                "Pattern ",
-                Fore.LIGHTBLUE_EX,
-                pattern.name,
-                Fore.WHITE,
-                " is already defined in ",
-                Fore.LIGHTCYAN_EX,
-                patterns_path,
-                Style.RESET_ALL,
-                sep="")
-        else:
-            with patterns_path.open("at") as f:
-                print(file=f)
-                write_pattern_output(pattern, region, args, file=f)
-            print(
-                Fore.WHITE,
-                "Pattern ",
-                Fore.LIGHTBLUE_EX,
-                pattern.name,
-                Fore.WHITE,
-                " added to ",
-                Fore.LIGHTCYAN_EX,
-                patterns_path,
-                Style.RESET_ALL,
-                sep="")
+        match PatternInfo.find_existing(patterns_path, pattern):
+            case PatternInfo.IDENTICAL_PATTERN_DEFINED:
+                print(
+                    Fore.WHITE,
+                    "An identical pattern ",
+                    Fore.LIGHTBLUE_EX,
+                    pattern.name,
+                    Fore.WHITE,
+                    " is already defined in ",
+                    Fore.LIGHTCYAN_EX,
+                    patterns_path,
+                    Style.RESET_ALL,
+                    sep="")
+            case PatternInfo.PATTERN_NAME_IN_USE:
+                print(
+                    Fore.WHITE,
+                    "Pattern name ",
+                    Fore.LIGHTBLUE_EX,
+                    pattern.name,
+                    Fore.WHITE,
+                    " is already in use in ",
+                    Fore.LIGHTCYAN_EX,
+                    patterns_path,
+                    Style.RESET_ALL,
+                    sep="")
+            case None:
+                with patterns_path.open("at") as f:
+                    print(file=f)
+                    write_pattern_output(pattern, region, args, file=f)
+                print(
+                    Fore.WHITE,
+                    "Pattern ",
+                    Fore.LIGHTBLUE_EX,
+                    pattern.name,
+                    Fore.WHITE,
+                    " added to ",
+                    Fore.LIGHTCYAN_EX,
+                    patterns_path,
+                    Style.RESET_ALL,
+                    sep="")
 
 
 def write_pattern_output(pattern: BeatStudioPattern, region: Region, args: list[tuple[str, str]], file: "SupportsWrite[str]|None" = None) -> None:
@@ -128,11 +158,3 @@ def summarize_pattern(pattern: BeatStudioPattern, region: Region, args: list[tup
         comments.append("# Parameters:")
         comments.extend(map(lambda p: f"#   {p[0]}={p[1]}", args))
     return comments
-
-
-def is_existing_pattern(patterns_path: Path, pattern: BeatStudioPattern) -> bool:
-    patterns = BeatStudioPattern.load(patterns_path)
-    for p in patterns:
-        if pattern == p:
-            return True
-    return False
