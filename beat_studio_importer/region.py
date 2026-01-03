@@ -138,7 +138,7 @@ class Region:
     def bpm(self) -> Bpm:
         return self.time_signature.pulse.midi_tempo_to_bpm(self.tempo)
 
-    def render(self, name: str, note_name_map: NoteNameMap,  quantize: NoteValue, override_tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
+    def render(self, name: str, note_name_map: NoteNameMap, quantize: NoteValue, override_tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
         # What is Beat Studio tempo? QPM, BPM or something else?
         # Assume it's supposed to be QPM for now
         tempo = BeatStudioTempo(round(midi_tempo_to_qpm(self.tempo))) \
