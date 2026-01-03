@@ -21,8 +21,9 @@
 #
 
 # pyright: reportAny=false
+# pyright: reportPrivateUsage=false
 
-from argparse import ArgumentParser, BooleanOptionalAction, Namespace
+from argparse import _SubParsersAction, ArgumentParser, BooleanOptionalAction, Namespace
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
 from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
@@ -112,10 +113,18 @@ def add_note_map_path_arg(parser: ArgumentParser, cwd: Path) -> None:
 
 
 def main(cwd: Path, argv: list[str]) -> None:
-    parser = ArgumentParser(prog="beat-studio-importer")
+    def add_parser(parsers: "_SubParsersAction[ArgumentParser]", name: str, help: str) -> ArgumentParser:
+        return parsers.add_parser(
+            name=name,
+            help=help,
+            description=help[0].upper() + help[1:])
+
+    parser = ArgumentParser(
+        prog="beat-studio-importer",
+        description="Import patterns from MIDI files into Beat Studio patterns.beat file")
     parsers = parser.add_subparsers(required=True)
 
-    p = parsers.add_parser(name="import")
+    p = add_parser(parsers, "import", "import pattern from MIDI file")
     p.set_defaults(func=do_import_args)
     add_path_arg(p, cwd)
     add_note_map_path_arg(p, cwd)
@@ -174,11 +183,14 @@ def main(cwd: Path, argv: list[str]) -> None:
         default=False,
         help="add new pattern to Beat Studio patterns.beat file")
 
-    p = parsers.add_parser(name="info")
+    p = add_parser(
+        parsers,
+        "info",
+        "show information about Beat Studio profile and (optionally) contents of a MIDI file")
     p.set_defaults(func=do_info_args)
     add_path_arg(p, cwd, optional=True)
 
-    p = parsers.add_parser(name="play")
+    p = add_parser(parsers, "play", "play MIDI file")
     p.set_defaults(func=do_play_args)
     add_path_arg(p, cwd)
     _ = p.add_argument(
