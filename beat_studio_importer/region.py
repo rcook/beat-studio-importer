@@ -62,7 +62,7 @@ class Region:
 
     @classmethod
     def build_all(cls: type[Self], timeline: Timeline, discard_boundary_hits: bool = True) -> list[Self]:
-        state = _RegionBuildState(
+        state = RegionBuildState(
             region_cls=cls,
             timeline=timeline,
             discard_boundary_hits=discard_boundary_hits)
@@ -160,7 +160,7 @@ class Region:
 
 
 @dataclass(frozen=False)
-class _RegionBuildState[R: Region]:
+class RegionBuildState[R: Region]:
     region_cls: type[R]
     timeline: Timeline
     discard_boundary_hits: bool
