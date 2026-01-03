@@ -35,7 +35,7 @@ from colorama import Fore, Style
 from pathlib import Path
 
 
-def do_import(path: Path, note_name_map: NoteNameMap | None, channel: MidiChannel | None, region_id: RegionId | None, quantize: NoteValue, name: str | None, override_tempo: BeatStudioTempo | None, add: bool = False) -> None:
+def do_import(path: Path, note_name_map: NoteNameMap | None, channel: MidiChannel | None, region_id: RegionId | None, quantize: NoteValue, name: str | None, override_tempo: BeatStudioTempo | None, repeat: int | None, add: bool = False) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
@@ -54,7 +54,8 @@ def do_import(path: Path, note_name_map: NoteNameMap | None, channel: MidiChanne
         name,
         note_name_map,
         quantize,
-        override_tempo=override_tempo)
+        override_tempo=override_tempo,
+        repeat=repeat)
 
     print(Fore.LIGHTYELLOW_EX, end="")
     pattern.print()

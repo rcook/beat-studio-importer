@@ -13,6 +13,8 @@ python \
     --channel 10 \
     --region 2 \
     --quantize 16 \
+    --tempo 100 \
+    --repeat 1 \
     --add
 ```
 
@@ -34,6 +36,9 @@ SNARE     : ....5.............5...55....
 
 It will also add this pattern to your `%LOCALAPPDATA%\Beat Studio\patterns.beat`
 file if it is not already present.
+
+All switches are optional and the script will choose sensible defaults if
+possible.
 
 ## Caveat emptor
 

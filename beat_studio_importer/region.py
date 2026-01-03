@@ -34,11 +34,20 @@ from dataclasses import dataclass
 from functools import cached_property, reduce
 from typing import Self
 
+from beat_studio_importer.user_error import UserError
+
 
 DEFAULT_TEMPO: MidiTempo = MidiTempo(120)
 DEFAULT_TIME_SIGNATURE: TimeSignature = TimeSignature(
     numerator=Numerator(4),
     denominator=NoteValue.QUARTER)
+
+
+TEMPO_RANGE: tuple[BeatStudioTempo, BeatStudioTempo] = (
+    BeatStudioTempo(60),
+    BeatStudioTempo(200)
+)
+STEP_COUNT_RANGE: tuple[int, int] = (16, 2048)
 
 
 @dataclass(frozen=True)
@@ -129,16 +138,33 @@ class Region:
     def bpm(self) -> Bpm:
         return self.time_signature.pulse.midi_tempo_to_bpm(self.tempo)
 
-    def render(self, name: str, note_name_map: NoteNameMap,  quantize: NoteValue, override_tempo: BeatStudioTempo | None = None) -> BeatStudioPattern:
+    def render(self, name: str, note_name_map: NoteNameMap,  quantize: NoteValue, override_tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
+        # What is Beat Studio tempo? QPM, BPM or something else?
+        # Assume it's supposed to be QPM for now
+        tempo = BeatStudioTempo(round(midi_tempo_to_qpm(self.tempo))) \
+            if override_tempo is None \
+            else override_tempo
+        if not (TEMPO_RANGE[0] <= tempo <= TEMPO_RANGE[1]):
+            # TBD: Move user-facing exceptions out of here!
+            raise UserError(
+                f"Tempo {tempo} is outside allowed range {TEMPO_RANGE}: specify a valid tempo using --tempo")
+
         ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value[0])
         assert r == 0
 
         tick_count = self.end_tick - self.start_tick
-        steps, r = divmod(tick_count, ticks_per_step)
+        step_count, r = divmod(tick_count, ticks_per_step)
         assert r == 0
 
+        total_step_count = step_count if repeat is None else step_count * repeat
+
+        if not (STEP_COUNT_RANGE[0] <= total_step_count <= STEP_COUNT_RANGE[1]):
+            # TBD: Move user-facing exceptions out of here!
+            raise UserError(
+                f"Number of steps {total_step_count} is outside allowed range {STEP_COUNT_RANGE}: use a shorter pattern or specify repetitions using --repeat")
+
         all_hits: Hits = {
-            member: [None] * steps
+            member: [None] * total_step_count
             for member in BeatStudioNoteName
         }
 
@@ -148,20 +174,20 @@ class Region:
             note_name = note_name_map[e.note]
             _, key, = note_name.value
             hits = all_hits[key]
-            hits[step] = BeatStudioVelocity.from_midi_velocity(e.velocity)
-
-        # What is Beat Studio tempo? QPM, BPM or something else?
-        # Assume it's supposed to be QPM for now
-        tempo = BeatStudioTempo(round(midi_tempo_to_qpm(self.tempo))) \
-            if override_tempo is None \
-            else override_tempo
+            velocity = BeatStudioVelocity.from_midi_velocity(e.velocity)
+            hits[step] = velocity
+            if repeat is None:
+                hits[step] = velocity
+            else:
+                for i in range(repeat):
+                    hits[step + i * step_count] = velocity
 
         return BeatStudioPattern(
             name=name,
             tempo=tempo,
             time_signature=self.time_signature,
             quantize=quantize,
-            step_count=steps,
+            step_count=total_step_count,
             hits=all_hits)
 
     @classmethod

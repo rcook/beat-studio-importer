@@ -59,6 +59,7 @@ def do_import_args(args: Namespace) -> None:
         quantize=quantize,
         name=checked_cast(str, args.name, optional=True),
         override_tempo=override_tempo,
+        repeat=checked_cast(int, args.repeat, optional=True),
         add=checked_cast(bool, args.add))
 
 
@@ -145,6 +146,12 @@ def main(cwd: Path, argv: list[str]) -> None:
         type=int,
         default=None,
         help="override tempo in output (to work around Beat Studio tempo bug)")
+    _ = p.add_argument(
+        "--repeat",
+        dest="repeat",
+        metavar="REPEAT",
+        type=int,
+        help="number of times to repeat hits")
     _ = p.add_argument(
         "--add",
         "-a",
