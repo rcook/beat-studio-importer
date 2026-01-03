@@ -24,6 +24,7 @@
 # pyright: reportPrivateUsage=false
 
 from argparse import _SubParsersAction, ArgumentParser, BooleanOptionalAction, Namespace
+from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
 from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
@@ -34,7 +35,28 @@ from beat_studio_importer.typing_util import checked_cast
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from pathlib import Path
+from typing import cast
 import sys
+
+
+def summarize_args(args: Namespace) -> list[tuple[str, str]]:
+    def render_value(value: object) -> str:
+        match value:
+            case bool() as x: return str(x).lower()
+            case _: return str(value)
+
+    attrs: list[tuple[str, str]] = []
+
+    for name in dir(args):
+        if name.startswith("_") or name in ["add", "func"]:
+            continue
+        value = cast(object, getattr(args, name))
+        if value is None:
+            continue
+
+        attrs.append((name, render_value(value)))
+
+    return sorted(attrs, key=lambda p: p[0])
 
 
 def do_import_args(args: Namespace) -> None:
@@ -62,7 +84,8 @@ def do_import_args(args: Namespace) -> None:
         name=checked_cast(str, args.name, optional=True),
         override_tempo=override_tempo,
         repeat=checked_cast(int, args.repeat, optional=True),
-        add=checked_cast(bool, args.add))
+        add=checked_cast(bool, args.add),
+        args=summarize_args(args))
 
 
 def do_info_args(args: Namespace) -> None:
@@ -120,8 +143,9 @@ def main(cwd: Path, argv: list[str]) -> None:
             description=help[0].upper() + help[1:])
 
     parser = ArgumentParser(
-        prog="beat-studio-importer",
-        description="Import patterns from MIDI files into Beat Studio patterns.beat file")
+        prog=PROGRAM_NAME,
+        description="Import patterns from MIDI files into Beat Studio patterns.beat file",
+        epilog=PROGRAM_URL)
     parsers = parser.add_subparsers(required=True)
 
     p = add_parser(parsers, "import", "import pattern from MIDI file")

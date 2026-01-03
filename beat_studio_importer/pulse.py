@@ -28,13 +28,13 @@ from fractions import Fraction
 
 @unique
 class Pulse(Enum):
-    SIXTEENTH = auto(), Fraction(1, 4), "sixteenth"
-    EIGHTH = auto(), Fraction(1, 2), "eighth"
-    DOTTED_EIGHTH = auto(), Fraction(3, 4), "dotted eighth"
-    QUARTER = auto(), 1, "quarter"
-    DOTTED_QUARTER = auto(), Fraction(3, 2), "dotted quarter"
-    HALF = auto(), 2, "half"
-    WHOLE = auto(), 4, "whole"
+    SIXTEENTH = auto(), Fraction(1, 4), "16th note"
+    EIGHTH = auto(), Fraction(1, 2), "8th note"
+    DOTTED_EIGHTH = auto(), Fraction(3, 4), "dotted 8th note"
+    QUARTER = auto(), 1, "quarter note"
+    DOTTED_QUARTER = auto(), Fraction(3, 2), "dotted quarter note"
+    HALF = auto(), 2, "half-note"
+    WHOLE = auto(), 4, "whole note"
 
     # Tempo as beats (pulses) per minute
     def midi_tempo_to_bpm(self, tempo: MidiTempo) -> Bpm:
