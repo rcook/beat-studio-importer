@@ -1,7 +1,7 @@
 [project]
 dependencies = [
   "colorama",
-  "mido",
+  "mido[ports-rtmidi]",
   "pyyaml",
 ]
 dynamic = ["version"]

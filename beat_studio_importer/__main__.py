@@ -28,6 +28,7 @@ from beat_studio_importer.info_command import do_info
 from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
 from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
+from beat_studio_importer.play_command import do_play
 from beat_studio_importer.typing_util import checked_cast
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
@@ -65,6 +66,18 @@ def do_import_args(args: Namespace) -> None:
 
 def do_info_args(args: Namespace) -> None:
     do_info(path=checked_cast(Path, args.path, optional=True))
+
+
+def do_play_args(args: Namespace) -> None:
+    temp0 = checked_cast(bool, args.force_channel_10, optional=True)
+    force_channel_10 = temp0 or False
+
+    port_name = checked_cast(str, args.port_name, optional=True)
+
+    do_play(
+        path=checked_cast(Path, args.path),
+        port_name=port_name,
+        force_channel_10=force_channel_10)
 
 
 def resolve_path(cwd: Path, s: str) -> Path:
@@ -164,6 +177,25 @@ def main(cwd: Path, argv: list[str]) -> None:
     p = parsers.add_parser(name="info")
     p.set_defaults(func=do_info_args)
     add_path_arg(p, cwd, optional=True)
+
+    p = parsers.add_parser(name="play")
+    p.set_defaults(func=do_play_args)
+    add_path_arg(p, cwd)
+    _ = p.add_argument(
+        "--10",
+        dest="force_channel_10",
+        metavar="FORCE_CHANNEL_10",
+        action=BooleanOptionalAction,
+        default=False,
+        help="remap all notes to MIDI channel 10")
+    _ = p.add_argument(
+        "--port",
+        "-p",
+        dest="port_name",
+        metavar="PORT_NAME",
+        type=str,
+        default=None,
+        help="MIDI port name")
 
     args = parser.parse_args(argv)
     result: object = None
