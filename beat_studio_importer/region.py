@@ -23,6 +23,7 @@
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
+from beat_studio_importer.constants import BEAT_STUDIO_STEP_COUNT_RANGE, BEAT_STUDIO_TEMPO_RANGE
 from beat_studio_importer.descriptor import Descriptor
 from beat_studio_importer.misc import BeatStudioTempo, Bpm, MidiTempo, Numerator, Qpm, RegionId, Tick
 from beat_studio_importer.note_name_map import NoteNameMap
@@ -40,13 +41,6 @@ DEFAULT_TEMPO: MidiTempo = MidiTempo(120)
 DEFAULT_TIME_SIGNATURE: TimeSignature = TimeSignature(
     numerator=Numerator(4),
     denominator=NoteValue.QUARTER)
-
-
-TEMPO_RANGE: tuple[BeatStudioTempo, BeatStudioTempo] = (
-    BeatStudioTempo(60),
-    BeatStudioTempo(200)
-)
-STEP_COUNT_RANGE: tuple[int, int] = (16, 2048)
 
 
 @dataclass(frozen=True)
@@ -112,10 +106,10 @@ class Region:
         tempo = BeatStudioTempo(round(midi_tempo_to_qpm(self.tempo))) \
             if override_tempo is None \
             else override_tempo
-        if not (TEMPO_RANGE[0] <= tempo <= TEMPO_RANGE[1]):
+        if not (BEAT_STUDIO_TEMPO_RANGE[0] <= tempo <= BEAT_STUDIO_TEMPO_RANGE[1]):
             # TBD: Move user-facing exceptions out of here!
             raise UserError(
-                f"Tempo {tempo} is outside allowed range {TEMPO_RANGE}: specify a valid tempo using --tempo")
+                f"Tempo {tempo} is outside allowed range {BEAT_STUDIO_TEMPO_RANGE}: specify a valid tempo using --tempo")
 
         ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value[0])
         assert r == 0
@@ -126,10 +120,10 @@ class Region:
 
         total_step_count = step_count if repeat is None else step_count * repeat
 
-        if not (STEP_COUNT_RANGE[0] <= total_step_count <= STEP_COUNT_RANGE[1]):
+        if not (BEAT_STUDIO_STEP_COUNT_RANGE[0] <= total_step_count <= BEAT_STUDIO_STEP_COUNT_RANGE[1]):
             # TBD: Move user-facing exceptions out of here!
             raise UserError(
-                f"Number of steps {total_step_count} is outside allowed range {STEP_COUNT_RANGE}: use a shorter pattern or specify repetitions using --repeat")
+                f"Number of steps {total_step_count} is outside allowed range {BEAT_STUDIO_STEP_COUNT_RANGE}: use a shorter pattern or specify repetitions using --repeat")
 
         all_hits: Hits = {
             member: [None] * total_step_count

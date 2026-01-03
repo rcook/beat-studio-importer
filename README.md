@@ -46,7 +46,7 @@ This script is highly experimental. I haven't tested its handling of
 MIDI tempos terribly thoroughly, so expect this kind of thing to break.
 [Beat Studio][beat-studio]'s pattern syntax will probably change over
 time too. This program was tested against Beat Studio version
-0.3.2-ALPHA-PRO.
+0.3.3-ALPHA-PRO.
 
 ## Type-check and install in dev mode
 

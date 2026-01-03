@@ -22,6 +22,7 @@
 
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
+from beat_studio_importer.constants import BEAT_STUDIO_DEFAULT_TIME_SIGNATURE
 from beat_studio_importer.misc import BeatStudioTempo, Numerator
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.time_signature import TimeSignature
@@ -95,13 +96,13 @@ class BeatStudioPattern:
             return None if c == "." else BeatStudioVelocity(int(c))
 
         if not header.startswith("[\"") or not header.endswith("]"):
-            raise ValueError(f"Invalid header {header}")
+            raise ValueError(f"Invalid header {header}: brackets not found")
 
         s = header[2:-1]
 
         idx = s.find("\"")
         if idx == -1:
-            raise ValueError(f"Invalid header {header}")
+            raise ValueError(f"Invalid header {header}: no name found")
 
         encoded_name = s[:idx]
         name = encoded_name.replace("\\\"", "\"")
@@ -109,33 +110,40 @@ class BeatStudioPattern:
         parts = list(filter(
             lambda s: len(s) > 0,
             map(lambda s: s.strip(), s[idx + 1:].split("-"))))
-        if len(parts) != 4:
-            raise ValueError(f"Invalid header {header}")
+        part_count = len(parts)
+
+        if not (3 <= part_count <= 4):
+            raise ValueError(
+                f"Invalid header {header}: unexpected number of values")
 
         step_count = int(parts[0])
         tempo = BeatStudioTempo(int(parts[1]))
         quantize = NoteValue.from_int(int(parts[2]))
 
-        parts = parts[3].split("/")
-        if len(parts) != 2:
-            raise ValueError(f"Invalid header {header}")
+        if part_count > 3:
+            parts = parts[3].split("/")
+            if len(parts) != 2:
+                raise ValueError(
+                    f"Invalid header {header}: invalid time signature")
 
-        numerator = Numerator(int(parts[0]))
-        denominator = NoteValue.from_int(int(parts[1]))
-        time_signature = TimeSignature(
-            numerator=numerator,
-            denominator=denominator)
+            numerator = Numerator(int(parts[0]))
+            denominator = NoteValue.from_int(int(parts[1]))
+            time_signature = TimeSignature(
+                numerator=numerator,
+                denominator=denominator)
+        else:
+            time_signature = BEAT_STUDIO_DEFAULT_TIME_SIGNATURE
 
         hits: Hits = {}
 
         for line in lines:
             parts = line.split(":")
             if len(parts) != 2:
-                raise ValueError(f"Invalid pattern {line}")
+                raise ValueError(f"Invalid pattern {line}: invalid format")
             note_name = BeatStudioNoteName.from_str(parts[0].strip())
             temp = parts[1].strip()
             if len(temp) != step_count:
-                raise ValueError(f"Invalid pattern {line}")
+                raise ValueError(f"Invalid pattern {line}: invalid step count")
 
             hits[note_name] = [translate_hit_char(c) for c in temp]
 
