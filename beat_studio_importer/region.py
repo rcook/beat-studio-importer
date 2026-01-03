@@ -31,7 +31,7 @@ from beat_studio_importer.tempo_util import midi_tempo_to_qpm
 from beat_studio_importer.time_signature import TimeSignature
 from beat_studio_importer.timeline import NoteEvent, TempoEvent, TimeSignatureEvent, Timeline
 from beat_studio_importer.user_error import UserError
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property, reduce
 from typing import Self
 
@@ -62,64 +62,33 @@ class Region:
 
     @classmethod
     def build_all(cls: type[Self], timeline: Timeline, discard_boundary_hits: bool = True) -> list[Self]:
-        regions: list[Self] = []
-        tempo = DEFAULT_TEMPO
-        time_signature = DEFAULT_TIME_SIGNATURE
-        start_tick = Tick(0)
-        tempo_event: TempoEvent | None = None
-        time_signature_event: TimeSignatureEvent | None = None
-        note_events: list[NoteEvent] = []
-        for event_tick, events in timeline.events:
-            assert event_tick >= start_tick
+        state = _RegionBuildState(
+            region_cls=cls,
+            timeline=timeline,
+            discard_boundary_hits=discard_boundary_hits)
+        for event_tick, events in state.timeline.events:
+            assert event_tick >= state.start_tick
             for event in events:
                 match event:
                     case TempoEvent() | TimeSignatureEvent() as e:
-                        if event_tick == start_tick:
+                        if event_tick == state.start_tick:
                             if isinstance(e, TempoEvent):
-                                assert tempo_event is None, "conflicting tempo events"
-                                tempo_event = e
+                                assert state.tempo_event is None, "conflicting tempo events"
+                                state.tempo_event = e
                             else:
-                                assert time_signature_event is None, "conflicting time signature events"
-                                time_signature_event = e
+                                assert state.time_signature_event is None, "conflicting time signature events"
+                                state.time_signature_event = e
                         else:
-                            region, tempo, time_signature = cls._close_region(
-                                timeline=timeline,
-                                tempo=tempo,
-                                time_signature=time_signature,
-                                region_id=RegionId(len(regions) + 1),
-                                start_tick=start_tick,
-                                end_tick=event_tick,
-                                tempo_event=tempo_event,
-                                time_signature_event=time_signature_event,
-                                note_events=note_events,
-                                discard_boundary_hits=discard_boundary_hits)
-                            if region is not None:
-                                regions.append(region)
-                            start_tick = event_tick
+                            state.close_region(event_tick)
                             if isinstance(e, TempoEvent):
-                                tempo_event = e
-                                time_signature_event = None
+                                state.tempo_event = e
+                                state.time_signature_event = None
                             else:
-                                tempo_event = None
-                                time_signature_event = e
-                            note_events = []
-                    case NoteEvent() as e: note_events.append(e)
-
-        region, _, _ = cls._close_region(
-            timeline=timeline,
-            tempo=tempo,
-            time_signature=time_signature,
-            region_id=RegionId(len(regions) + 1),
-            start_tick=start_tick,
-            end_tick=None,
-            tempo_event=tempo_event,
-            time_signature_event=time_signature_event,
-            note_events=note_events,
-            discard_boundary_hits=discard_boundary_hits)
-        if region is not None:
-            regions.append(region)
-
-        return regions
+                                state.tempo_event = None
+                                state.time_signature_event = e
+                    case NoteEvent() as e: state.note_events.append(e)
+        state.close_region(None)
+        return state.regions
 
     @cached_property
     def descriptor(self) -> Descriptor:
@@ -189,58 +158,79 @@ class Region:
             step_count=total_step_count,
             hits=all_hits)
 
-    @classmethod
-    def _close_region(cls: type[Self], timeline: Timeline, tempo: MidiTempo, time_signature: TimeSignature, region_id: RegionId, start_tick: Tick, end_tick: Tick | None, tempo_event: TempoEvent | None, time_signature_event: TimeSignatureEvent | None, note_events: list[NoteEvent], discard_boundary_hits: bool) -> tuple[Self | None, MidiTempo, TimeSignature]:
+
+@dataclass(frozen=False)
+class _RegionBuildState[R: Region]:
+    region_cls: type[R]
+    timeline: Timeline
+    discard_boundary_hits: bool
+    tempo: MidiTempo = DEFAULT_TEMPO
+    time_signature: TimeSignature = DEFAULT_TIME_SIGNATURE
+    start_tick: Tick = Tick(0)
+    tempo_event: TempoEvent | None = None
+    time_signature_event: TimeSignatureEvent | None = None
+    note_events: list[NoteEvent] = field(default_factory=list)
+    regions: list[R] = field(default_factory=list)
+
+    def close_region(self, end_tick: Tick | None) -> None:
         def reduce_func(end_tick: Tick, note_event: NoteEvent) -> Tick:
             assert note_event.tick >= end_tick
             return max(end_tick, note_event.tick)
 
-        if tempo_event is None and time_signature_event is None and len(note_events) == 0:
-            return None, tempo, time_signature
+        if self.tempo_event is None and self.time_signature_event is None and len(self.note_events) == 0:
+            if end_tick is not None:
+                self.start_tick = end_tick
+            return
 
-        if tempo_event is None:
-            temp_tempo = tempo
+        if self.tempo_event is None:
+            temp_tempo = self.tempo
         else:
-            assert tempo_event.tick == start_tick
-            temp_tempo = tempo_event.tempo
+            assert self.tempo_event.tick == self.start_tick
+            temp_tempo = self.tempo_event.tempo
 
-        if time_signature_event is None:
-            temp_time_signature = time_signature
+        if self.time_signature_event is None:
+            temp_time_signature = self.time_signature
         else:
-            assert time_signature_event.tick == start_tick
+            assert self.time_signature_event.tick == self.start_tick
             temp_time_signature = TimeSignature(
-                numerator=time_signature_event.numerator,
-                denominator=NoteValue.from_int(time_signature_event.denominator))
+                numerator=self.time_signature_event.numerator,
+                denominator=NoteValue.from_int(self.time_signature_event.denominator))
 
         if end_tick is None:
-            end_tick = reduce(reduce_func, note_events, start_tick)
+            end_tick = reduce(reduce_func, self.note_events, self.start_tick)
 
         ticks_per_bar = temp_time_signature.ticks_per_bar(
-            timeline.ticks_per_beat)
+            self.timeline.ticks_per_beat)
 
-        # Handle note hit on boundary
-        if len(note_events) > 0:
-            bar_count, r = divmod(end_tick - start_tick, ticks_per_bar)
+        # Handle note hit on boundary: note hit boundary belongs to the
+        # next bar so we either discard the hit or extend the region by
+        # a whole extra bar to accommodate the hit
+        if len(self.note_events) > 0:
+            bar_count, r = divmod(end_tick - self.start_tick, ticks_per_bar)
             assert bar_count >= 0 and r >= 0
-            if r == 0 and discard_boundary_hits:
-                e = note_events[-1]
+            if r == 0 and self.discard_boundary_hits:
+                e = self.note_events[-1]
                 assert e.tick <= end_tick
                 if e.tick >= end_tick:
-                    e = note_events.pop()
+                    e = self.note_events.pop()
             else:
                 bar_count += 1
         else:
             bar_count = 1
 
-        end_tick = Tick(start_tick + bar_count * ticks_per_bar)
+        end_tick = Tick(self.start_tick + bar_count * ticks_per_bar)
 
-        region = cls(
-            id=region_id,
-            ticks_per_beat=timeline.ticks_per_beat,
-            start_tick=start_tick,
-            end_tick=end_tick,
-            tempo=temp_tempo,
-            time_signature=temp_time_signature,
-            notes=note_events,
-            bar_count=bar_count)
-        return region, temp_tempo, temp_time_signature
+        self.regions.append(
+            self.region_cls(
+                id=RegionId(len(self.regions)+1),
+                ticks_per_beat=self.timeline.ticks_per_beat,
+                start_tick=self.start_tick,
+                end_tick=end_tick,
+                tempo=temp_tempo,
+                time_signature=temp_time_signature,
+                notes=self.note_events,
+                bar_count=bar_count))
+        self.tempo = temp_tempo
+        self.time_signature = temp_time_signature
+        self.start_tick = end_tick
+        self.note_events = []
