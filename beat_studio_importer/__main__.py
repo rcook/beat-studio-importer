@@ -113,9 +113,15 @@ class InfoArgs(Protocol):
     @property
     def path(self) -> Path | None: ...
 
+    @property
+    def dump(self) -> bool: ...
+
+    @property
+    def exclude(self) -> list[str] | None: ...
+
 
 def do_info_args(args: InfoArgs) -> None:
-    do_info(path=args.path)
+    do_info(path=args.path, dump=args.dump, exclude=args.exclude)
 
 
 @runtime_checkable
@@ -285,6 +291,21 @@ def main(cwd: Path, argv: list[str]) -> None:
         InfoArgs,  # type: ignore[type-abstract]
         do_info_args)
     add_path_arg(p, cwd, optional=True)
+    _ = p.add_argument(
+        "--dump",
+        dest="dump",
+        metavar="DUMP",
+        action=BooleanOptionalAction,
+        default=False,
+        help="dump out list of MIDI events")
+    _ = p.add_argument(
+        "--exclude",
+        dest="exclude",
+        metavar="EXCLUDE",
+        type=str,
+        nargs="+",
+        default=None,
+        help="filter out given message types")
 
     p = add_parser(
         parsers,

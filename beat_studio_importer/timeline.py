@@ -41,7 +41,9 @@ class Timeline:
         for track in file.tracks:
             tick = Tick(0)
             for m in track:
-                tick = Tick(tick + m.time)
+                match m.time:
+                    case int() as value: tick = Tick(tick + value)
+                    case float() as value: raise RuntimeError(f"Unexpected float time {value} in MIDI message stream")
 
                 event: Event | None = None
                 match m.type:

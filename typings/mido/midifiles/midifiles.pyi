@@ -136,7 +136,8 @@ class MidiFile:
         """
         ...
 
-    def __iter__(self):  # -> Generator[Any, Any, None]:
+    def __iter__(self) -> Generator[BaseMessage, None, None]:
+        # -> Generator[Any, Any, None]:
         ...
 
     # -> Generator[Any | MetaMessage, Any, None]:

@@ -20,7 +20,6 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from mido import MidiFile
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
 from beat_studio_importer.beat_studio_util import default_beat_studio_profile
 from beat_studio_importer.midi_util import summarize_midi_file
@@ -30,14 +29,15 @@ from beat_studio_importer.timeline import Timeline
 from beat_studio_importer.ui import cprint, print_key_value
 from beat_studio_importer.user_error import UserError
 from colorama import Fore
+from mido import MidiFile
 from pathlib import Path
 
 
-def do_info(path: Path | None) -> None:
+def do_info(path: Path | None, dump: bool, exclude: list[str] | None) -> None:
     show_beat_studio_info()
 
     if path is not None:
-        show_file_info(path=path)
+        show_file_info(path=path, dump=dump, exclude=exclude)
 
 
 def show_beat_studio_info() -> None:
@@ -60,7 +60,7 @@ def show_beat_studio_info() -> None:
     print()
 
 
-def show_file_info(path: Path) -> None:
+def show_file_info(path: Path, dump: bool, exclude: list[str] | None) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
@@ -82,3 +82,19 @@ def show_file_info(path: Path) -> None:
                 f"BPM tempo (beats per minute, beat={region.time_signature.pulse.display})",
                 f"{region.bpm:.1f}")
             table.print()
+
+    if dump:
+        print()
+        cprint(Fore.LIGHTYELLOW_EX, f"MIDI messages")
+        time = 0.0
+        for message in file:
+            time += message.time
+            if exclude is not None and message.type in exclude:
+                continue
+            cprint(
+                Fore.LIGHTBLUE_EX,
+                "  ",
+                f"{time:<10}",
+                "  ",
+                Fore.LIGHTCYAN_EX,
+                message)
