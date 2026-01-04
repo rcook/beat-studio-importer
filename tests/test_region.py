@@ -20,10 +20,10 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.midi_note_name_map import DEFAULT_MIDI_NOTE_NAME_MAP
 from beat_studio_importer.note_value import NoteValue
 from io import StringIO
+from mido import MidiFile
 from pathlib import Path
 from beat_studio_importer.region import Region
 from beat_studio_importer.timeline import Timeline
@@ -62,10 +62,10 @@ def render_to_lines(region: Region, quantize: NoteValue | None = None, print_tes
 
 class TestRegion:
     def test_basics(self) -> None:
-        source = MidiSource.load(SAMPLES_DIR / "reaper" / "smf-type-1.mid")
-        assert len(source.tracks) == 2
+        file = MidiFile(SAMPLES_DIR / "reaper" / "smf-type-1.mid")
+        assert len(file.tracks) == 2
 
-        timeline = Timeline.build(source.file)
+        timeline = Timeline.build(file)
 
         regions = Region.build_all(timeline)
         assert len(regions) == 5
@@ -156,10 +156,10 @@ class TestRegion:
         ]
 
     def test_boundary(self) -> None:
-        source = MidiSource.load(SAMPLES_DIR / "seven-eight.mid")
-        assert len(source.tracks) == 2
+        file = MidiFile(SAMPLES_DIR / "seven-eight.mid")
+        assert len(file.tracks) == 2
 
-        timeline = Timeline.build(source.file)
+        timeline = Timeline.build(file)
 
         regions = Region.build_all(timeline, discard_boundary_hits=True)
         assert len(regions) == 1
@@ -259,9 +259,9 @@ RIDE      : ................................
 SNARE     : ................................""")
     ])
     def test_demos(self, path: Path, expected: str) -> None:
-        source = MidiSource.load(SAMPLES_DIR / "0.3.3-alpha" / path)
-        assert len(source.tracks) == 1
-        timeline = Timeline.build(source.file)
+        file = MidiFile(SAMPLES_DIR / "0.3.3-alpha" / path)
+        assert len(file.tracks) == 1
+        timeline = Timeline.build(file)
         regions = Region.build_all(timeline, discard_boundary_hits=True)
         assert len(regions) == 1
         s = render_to_str(regions[0])

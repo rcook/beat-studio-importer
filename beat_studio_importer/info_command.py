@@ -20,9 +20,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from mido import MidiFile
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
 from beat_studio_importer.beat_studio_util import default_beat_studio_profile
-from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.midi_util import summarize_midi_file
 from beat_studio_importer.region import Region
 from beat_studio_importer.table import Table
@@ -64,11 +64,10 @@ def show_file_info(path: Path) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
-    source = MidiSource.load(path)
+    file = MidiFile(path)
+    summarize_midi_file(file)
 
-    summarize_midi_file(source.file)
-
-    timeline = Timeline.build(source.file)
+    timeline = Timeline.build(file)
     regions = Region.build_all(timeline)
     for region in regions:
         print()

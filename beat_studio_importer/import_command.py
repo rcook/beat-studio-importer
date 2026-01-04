@@ -20,12 +20,12 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from mido import MidiFile
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
 from beat_studio_importer.beat_studio_util import default_beat_studio_profile
 from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.import_ui import select_region
 from beat_studio_importer.midi_note_name_map import DEFAULT_MIDI_NOTE_NAME_MAP, MidiNoteNameMap
-from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.midi_util import summarize_midi_file
 from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
 from beat_studio_importer.note_value import NoteValue
@@ -63,16 +63,14 @@ def do_import(path: Path, note_name_map: MidiNoteNameMap | None, channel: MidiCh
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
-    source = MidiSource.load(path)
+    file = MidiFile(path)
+    summarize_midi_file(file)
 
-    summarize_midi_file(source.file)
-    print()
-
-    timeline = Timeline.build(source.file, channel=channel)
+    timeline = Timeline.build(file, channel=channel)
     regions = Region.build_all(timeline)
-    region = select_region(source.path, regions, region_id)
+    region = select_region(path, regions, region_id)
 
-    name = name or f"{source.path.stem} region {region.id}"
+    name = name or f"{path.stem} region {region.id}"
     note_name_map = note_name_map or DEFAULT_MIDI_NOTE_NAME_MAP
     pattern = region.render(
         name,
