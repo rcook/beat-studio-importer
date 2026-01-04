@@ -50,7 +50,7 @@ def summarize_args(args: object) -> list[tuple[str, str]]:
     attrs: list[tuple[str, str]] = []
 
     for name in dir(args):
-        if name.startswith("_") or name in ["add", "func"]:
+        if name.startswith("_") or name in ["add", "handler"]:
             continue
         value = cast(object, getattr(args, name))
         if value is None:
