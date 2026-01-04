@@ -7,6 +7,12 @@ class BaseMessage:
     """Abstract base class for messages."""
     is_meta = ...
 
+    @property
+    def type(self) -> str: ...
+
+    @property
+    def time(self) -> int: ...
+
     def copy(self):
         ...
 
@@ -84,6 +90,15 @@ class SysexData(tuple):
 class Message(BaseMessage):
     def __init__(self, type, skip_checks=..., **args) -> None:
         ...
+
+    @property
+    def channel(self) -> int: ...
+
+    @property
+    def note(self) -> int: ...
+
+    @property
+    def velocity(self) -> int: ...
 
     def copy(self, skip_checks=..., **overrides):  # -> Self:
         """Return a copy of the message.

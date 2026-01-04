@@ -20,14 +20,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-# pyright: reportUnknownMemberType=false
-
 from beat_studio_importer.user_error import UserError
-from collections.abc import Iterable
-from mido import MidiFile, MidiTrack
-from mido.messages import BaseMessage
+from mido import MidiFile
 from pathlib import Path
-from typing import cast
 
 
 def do_remap(path: Path, output_path: Path) -> None:
@@ -38,8 +33,8 @@ def do_remap(path: Path, output_path: Path) -> None:
 
     file = MidiFile(path)
 
-    for track in cast(Iterable[MidiTrack], file.tracks):
-        for message in cast(Iterable[BaseMessage], track):
+    for track in file.tracks:
+        for message in track:
             if hasattr(message, "channel"):
                 message.channel = 9
 

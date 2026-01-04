@@ -20,11 +20,11 @@ http://www.sonicspot.com/guide/midifiles.html
 """
 
 
+from pathlib import Path
+from mido.messages import BaseMessage
+from mido import MidiTrack
 from collections.abc import Generator
 from datetime import time
-from mido import MidiTrack
-from mido.messages import BaseMessage
-from pathlib import Path
 
 DEFAULT_TEMPO = ...
 DEFAULT_TICKS_PER_BEAT = ...
@@ -161,7 +161,7 @@ class MidiFile:
         """
         ...
 
-    def save(self, filename=..., file=...):  # -> None:
+    def save(self, filename: Path = ..., file=...) -> None:  # -> None:
         """Save to a file.
 
         If file is passed the data will be saved to that file. This is

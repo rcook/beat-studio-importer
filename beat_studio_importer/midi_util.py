@@ -22,10 +22,8 @@
 
 from beat_studio_importer.table import Table
 from beat_studio_importer.ui import cprint, print_key_value
-from collections.abc import Iterable
 from colorama import Fore
-from mido import MidiFile, MidiTrack
-from mido.messages import BaseMessage
+from mido import MidiFile
 from typing import cast
 
 
@@ -33,11 +31,9 @@ def summarize_midi_file(file: MidiFile) -> None:
     midi_channels: set[int] = set()
     message_counts: dict[str, int] = {}
 
-    for track in cast(Iterable[MidiTrack], file.tracks):
-        for m in cast(Iterable[BaseMessage], track):
-            # autopep8: off
-            message_type = cast(str, m.type) # pyright: ignore[reportAttributeAccessIssue]
-            # autopep8: on
+    for track in file.tracks:
+        for m in track:
+            message_type = m.type
             count = message_counts.get(message_type)
             if count is None:
                 message_counts[message_type] = 1
@@ -52,7 +48,7 @@ def summarize_midi_file(file: MidiFile) -> None:
     print_key_value("Ticks per beat", file.ticks_per_beat)
 
     cprint(Fore.LIGHTBLUE_EX, "Tracks:")
-    for track_name in sorted(cast(str, t.name) for t in cast(Iterable[MidiTrack], file.tracks)):
+    for track_name in sorted(t.name for t in file.tracks):
         cprint("  ", Fore.LIGHTCYAN_EX, track_name)
 
     cprint(Fore.LIGHTBLUE_EX, "MIDI channels:")

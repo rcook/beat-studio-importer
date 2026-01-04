@@ -284,6 +284,21 @@ class MetaMessage(BaseMessage):
     def __init__(self, type, skip_checks=..., **kwargs) -> None:
         ...
 
+    @property
+    def tempo(self) -> int: ...
+
+    @property
+    def numerator(self) -> int: ...
+
+    @property
+    def denominator(self) -> int: ...
+
+    @property
+    def clocks_per_click(self) -> int: ...
+
+    @property
+    def notated_32nd_notes_per_beat(self) -> int: ...
+
     def copy(self, **overrides):  # -> Self:
         """Return a copy of the message
 
