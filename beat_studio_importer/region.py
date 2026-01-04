@@ -29,15 +29,16 @@ from beat_studio_importer.events import NoteEvent, TempoEvent, TimeSignatureEven
 from beat_studio_importer.misc import RegionId, Tick
 from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
 from beat_studio_importer.note_value import NoteValue
-from beat_studio_importer.tempos import Bpm, MidiTempo, Qpm, midi_tempo_to_qpm
+from beat_studio_importer.tempos import Bpm, MidiTempo, Qpm, midi_tempo_to_qpm, qpm_to_midi_tempo
 from beat_studio_importer.time_signature import Numerator, TimeSignature
 from beat_studio_importer.timeline import Timeline
 from dataclasses import dataclass, field
+from fractions import Fraction
 from functools import cached_property, reduce
 from typing import Self
 
 
-DEFAULT_MIDI_TEMPO: MidiTempo = MidiTempo(500_000)  # 120 qpm
+DEFAULT_MIDI_TEMPO: MidiTempo = qpm_to_midi_tempo(Qpm(Fraction(120)))
 DEFAULT_TIME_SIGNATURE: TimeSignature = TimeSignature(
     numerator=Numerator(4),
     denominator=NoteValue.QUARTER)

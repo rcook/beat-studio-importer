@@ -50,3 +50,7 @@ def midi_tempo_to_qpm(tempo: MidiTempo) -> Qpm:
     :rtype: Fraction
     """
     return Qpm(Fraction(60_000_000, tempo))
+
+
+def qpm_to_midi_tempo(qpm: Qpm) -> MidiTempo:
+    return MidiTempo(round(60_000_000 / qpm))
