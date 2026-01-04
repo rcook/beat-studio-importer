@@ -20,17 +20,26 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.note_value import NoteValue
-from beat_studio_importer.time_signature import Numerator, TimeSignature
+from beat_studio_importer.tempos import MidiTempo, Qpm, midi_tempo_to_qpm
+from typing import Self
 
 
-PROGRAM_NAME: str = "beat-studio-importer"
+BEAT_STUDIO_TEMPO_MIN: int = 60
+BEAT_STUDIO_TEMPO_MAX: int = 200
 
-PROGRAM_URL: str = "https://github.com/rcook/beat-studio-importer"
 
-BEAT_STUDIO_STEP_COUNT_MIN: int = 4
-BEAT_STUDIO_STEP_COUNT_MAX: int = 8192
+# What is the tempo measure in Beat Studio?
+# We assume it's quarter notes per minute (QPM) for now
+class BeatStudioTempo(int):
+    def __new__(cls: type[Self], value: int) -> Self:
+        if not (BEAT_STUDIO_TEMPO_MIN <= value <= BEAT_STUDIO_TEMPO_MAX):
+            raise ValueError(f"Invalid Beat Studio velocity {value}")
+        return super().__new__(cls, value)
 
-BEAT_STUDIO_DEFAULT_TIME_SIGNATURE: TimeSignature = TimeSignature(
-    Numerator(4),
-    NoteValue.QUARTER)
+    @classmethod
+    def from_qpm(cls: type[Self], tempo: Qpm) -> Self:
+        return cls(round(tempo))
+
+    @classmethod
+    def from_midi_tempo(cls: type[Self], tempo: MidiTempo) -> Self:
+        return cls(round(midi_tempo_to_qpm(tempo)))

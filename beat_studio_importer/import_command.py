@@ -20,22 +20,23 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from mido import MidiFile
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
+from beat_studio_importer.beat_studio_tempo import BEAT_STUDIO_TEMPO_MAX, BEAT_STUDIO_TEMPO_MIN, BeatStudioTempo
 from beat_studio_importer.beat_studio_util import default_beat_studio_profile
-from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
+from beat_studio_importer.constants import BEAT_STUDIO_STEP_COUNT_MAX, BEAT_STUDIO_STEP_COUNT_MIN, PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.midi_note_name_map import DEFAULT_MIDI_NOTE_NAME_MAP, MidiNoteNameMap
 from beat_studio_importer.midi_util import summarize_midi_file
 from beat_studio_importer.misc import MidiChannel, RegionId
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region import Region
-from beat_studio_importer.tempos import BeatStudioTempo
+from beat_studio_importer.tempos import midi_tempo_to_qpm
 from beat_studio_importer.timeline import Timeline
 from beat_studio_importer.ui import select_region
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from datetime import datetime, timezone
 from enum import Enum, auto, unique
+from mido import MidiFile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -73,12 +74,26 @@ def do_import(path: Path, note_name_map: MidiNoteNameMap | None, channel: MidiCh
 
     name = name or f"{path.stem} region {region.id}"
     note_name_map = note_name_map or DEFAULT_MIDI_NOTE_NAME_MAP
+
+    if override_tempo is None:
+        qpm = midi_tempo_to_qpm(region.tempo)
+        if not (BEAT_STUDIO_TEMPO_MIN <= qpm <= BEAT_STUDIO_TEMPO_MAX):
+            raise UserError(
+                f"Tempo {qpm} is outside allowed range ({BEAT_STUDIO_TEMPO_MIN}, {BEAT_STUDIO_TEMPO_MAX})")
+        tempo = BeatStudioTempo.from_qpm(qpm)
+    else:
+        tempo = override_tempo
+
     pattern = region.render(
         name,
         note_name_map,
         quantize,
-        override_tempo=override_tempo,
+        tempo=tempo,
         repeat=repeat)
+
+    if not (BEAT_STUDIO_STEP_COUNT_MIN <= pattern.step_count <= BEAT_STUDIO_STEP_COUNT_MAX):
+        raise UserError(
+            f"Number of steps {pattern.step_count} is outside allowed range ({BEAT_STUDIO_STEP_COUNT_MIN}, {BEAT_STUDIO_STEP_COUNT_MAX}): use a shorter pattern or specify repetitions using --repeat")
 
     print(Fore.LIGHTYELLOW_EX, end="")
     write_pattern_output(pattern, region, args)

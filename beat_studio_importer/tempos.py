@@ -27,9 +27,6 @@ from typing import NewType
 
 # Various different measures of tempo
 
-# Tempo as indicated by Beat Studio (quarter notes per minute?)
-BeatStudioTempo = NewType("BeatStudioTempo", int)
-
 # Beats (pulses) per minute
 # Stored as a fraction to maintain accuracy
 Bpm = NewType("Bpm", Fraction)
@@ -53,8 +50,3 @@ def midi_tempo_to_qpm(tempo: MidiTempo) -> Qpm:
     :rtype: Fraction
     """
     return Qpm(Fraction(60_000_000, tempo))
-
-
-# Tempo as indicated by Beat Studio (quarter notes per minute?)
-def midi_tempo_to_beat_studio_tempo(tempo: MidiTempo) -> BeatStudioTempo:
-    return BeatStudioTempo(round(midi_tempo_to_qpm(tempo)))

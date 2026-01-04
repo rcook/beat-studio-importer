@@ -22,17 +22,16 @@
 
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
+from beat_studio_importer.beat_studio_tempo import BeatStudioTempo
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
-from beat_studio_importer.constants import BEAT_STUDIO_STEP_COUNT_RANGE, BEAT_STUDIO_TEMPO_RANGE
 from beat_studio_importer.descriptor import Descriptor
 from beat_studio_importer.events import NoteEvent, TempoEvent, TimeSignatureEvent
 from beat_studio_importer.misc import RegionId, Tick
 from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
 from beat_studio_importer.note_value import NoteValue
-from beat_studio_importer.tempos import BeatStudioTempo, Bpm, MidiTempo, Qpm, midi_tempo_to_beat_studio_tempo, midi_tempo_to_qpm
+from beat_studio_importer.tempos import Bpm, MidiTempo, Qpm, midi_tempo_to_qpm
 from beat_studio_importer.time_signature import Numerator, TimeSignature
 from beat_studio_importer.timeline import Timeline
-from beat_studio_importer.user_error import UserError
 from dataclasses import dataclass, field
 from functools import cached_property, reduce
 from typing import Self
@@ -101,14 +100,8 @@ class Region:
     def bpm(self) -> Bpm:
         return self.time_signature.pulse.midi_tempo_to_bpm(self.tempo)
 
-    def render(self, name: str, note_name_map: MidiNoteNameMap, quantize: NoteValue, override_tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
-        tempo = midi_tempo_to_beat_studio_tempo(self.tempo) \
-            if override_tempo is None \
-            else override_tempo
-        if not (BEAT_STUDIO_TEMPO_RANGE[0] <= tempo <= BEAT_STUDIO_TEMPO_RANGE[1]):
-            # TBD: Move user-facing exceptions out of here!
-            raise UserError(
-                f"Tempo {tempo} is outside allowed range {BEAT_STUDIO_TEMPO_RANGE}: specify a valid tempo using --tempo")
+    def render(self, name: str, note_name_map: MidiNoteNameMap, quantize: NoteValue, tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
+        tempo = tempo or BeatStudioTempo.from_midi_tempo(self.tempo)
 
         ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.int_value)
         assert r == 0
@@ -118,11 +111,6 @@ class Region:
         assert r == 0
 
         total_step_count = step_count if repeat is None else step_count * repeat
-
-        if not (BEAT_STUDIO_STEP_COUNT_RANGE[0] <= total_step_count <= BEAT_STUDIO_STEP_COUNT_RANGE[1]):
-            # TBD: Move user-facing exceptions out of here!
-            raise UserError(
-                f"Number of steps {total_step_count} is outside allowed range {BEAT_STUDIO_STEP_COUNT_RANGE}: use a shorter pattern or specify repetitions using --repeat")
 
         all_hits: Hits = {
             member: [None] * total_step_count
@@ -136,10 +124,10 @@ class Region:
             note_name = note_name_map.get(e.note)
             if note_name is None:
                 if note_name_map.path is None:
-                    raise UserError(
+                    raise RuntimeError(
                         f"MIDI note {e.note} is not in default mapping")
                 else:
-                    raise UserError(
+                    raise RuntimeError(
                         f"MIDI note {e.note} has no mapping in file {note_name_map.path}")
 
             hits = all_hits[note_name.beat_studio_note_name]

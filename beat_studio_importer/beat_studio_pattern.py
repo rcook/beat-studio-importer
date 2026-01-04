@@ -21,10 +21,10 @@
 #
 
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
+from beat_studio_importer.beat_studio_tempo import BeatStudioTempo
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.constants import BEAT_STUDIO_DEFAULT_TIME_SIGNATURE
 from beat_studio_importer.note_value import NoteValue
-from beat_studio_importer.tempos import BeatStudioTempo
 from beat_studio_importer.time_signature import Numerator, TimeSignature
 from dataclasses import dataclass
 from pathlib import Path

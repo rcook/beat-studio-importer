@@ -20,7 +20,8 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from argparse import _SubParsersAction, ArgumentParser, BooleanOptionalAction, Namespace
+from argparse import _SubParsersAction, ArgumentParser, ArgumentTypeError, BooleanOptionalAction, Namespace
+from beat_studio_importer.beat_studio_tempo import BEAT_STUDIO_TEMPO_MAX, BEAT_STUDIO_TEMPO_MIN, BeatStudioTempo
 from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
@@ -29,7 +30,6 @@ from beat_studio_importer.misc import MidiChannel, RegionId
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.play_command import do_play
 from beat_studio_importer.remap_command import do_remap
-from beat_studio_importer.tempos import BeatStudioTempo
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from pathlib import Path
@@ -202,6 +202,13 @@ def main(cwd: Path, argv: list[str]) -> None:
         p.set_defaults(handler=(args_cls, func))
         return p
 
+    def beat_studio_tempo(s: str) -> BeatStudioTempo:
+        try:
+            return BeatStudioTempo(int(s))
+        except ValueError:
+            raise ArgumentTypeError(
+                f"tempo {s} is outside allowed range ({BEAT_STUDIO_TEMPO_MIN}, {BEAT_STUDIO_TEMPO_MAX})")
+
     parser = ArgumentParser(
         prog=PROGRAM_NAME,
         description="Import patterns from MIDI files into Beat Studio patterns.beat file",
@@ -253,7 +260,7 @@ def main(cwd: Path, argv: list[str]) -> None:
         "--tempo",
         dest="override_tempo",
         metavar="OVERRIDE_TEMPO",
-        type=int,
+        type=beat_studio_tempo,
         default=None,
         help="override tempo in output (to work around Beat Studio tempo bug)")
     _ = p.add_argument(
