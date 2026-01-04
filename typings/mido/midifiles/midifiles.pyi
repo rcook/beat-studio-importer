@@ -20,11 +20,11 @@ http://www.sonicspot.com/guide/midifiles.html
 """
 
 
-from pathlib import Path
-from mido.messages import BaseMessage
-from mido import MidiTrack
 from collections.abc import Generator
 from datetime import time
+from mido import MidiTrack
+from mido.messages import BaseMessage
+from pathlib import Path
 
 DEFAULT_TEMPO = ...
 DEFAULT_TICKS_PER_BEAT = ...
@@ -112,8 +112,7 @@ class MidiFile:
     def tracks(self) -> list[MidiTrack]: ...
 
     @property
-    def merged_track(self):  # -> MidiTrack:
-        ...
+    def merged_track(self) -> MidiTrack: ...
 
     @merged_track.deleter
     def merged_track(self):  # -> None:

@@ -38,55 +38,55 @@ class Timeline:
     @classmethod
     def build(cls: type[Self], file: MidiFile, channel: MidiChannel | None = None) -> Self:
         all_events: dict[Tick, list[Event]] = {}
-        for track in file.tracks:
-            tick = Tick(0)
-            for m in track:
-                match m.time:
-                    case int() as value: tick = Tick(tick + value)
-                    case float() as value: raise RuntimeError(f"Unexpected float time {value} in MIDI message stream")
 
-                event: Event | None = None
-                match m.type:
-                    case "note_on":
-                        assert isinstance(m, Message)
-                        message_channel = MidiChannel(m.channel + 1)
-                        if channel is None or message_channel == channel:
-                            event = NoteEvent(
-                                tick=tick,
-                                channel=message_channel,
-                                note=MidiNote(m.note),
-                                velocity=MidiVelocity(m.velocity))
-                    case "set_tempo":
-                        assert isinstance(m, MetaMessage)
-                        event = TempoEvent(tick=tick, tempo=MidiTempo(m.tempo))
-                    case "time_signature":
-                        assert isinstance(m, MetaMessage)
-                        assert m.clocks_per_click == 24, f"unsupported clocks_per_click value {m.clocks_per_click}"
-                        assert m.notated_32nd_notes_per_beat == 8, f"unsupported notated_32nd_notes_per_beat value {m.notated_32nd_notes_per_beat}"
-                        event = TimeSignatureEvent(
+        tick = Tick(0)
+        for message in file.merged_track:  # yields messages with delta time
+            assert isinstance(message.time, int)
+            tick = Tick(tick + message.time)
+
+            event: Event | None = None
+            match message.type:
+                case "note_on":
+                    assert isinstance(message, Message)
+                    message_channel = MidiChannel(message.channel + 1)
+                    if channel is None or message_channel == channel:
+                        event = NoteEvent(
                             tick=tick,
-                            time_signature=TimeSignature(
-                                numerator=Numerator(m.numerator),
-                                denominator=NoteValue.from_int(m.denominator)))
-                    case _:
-                        assert m.type in [
-                            "control_change",
-                            "end_of_track",
-                            "key_signature",
-                            "note_off",
-                            "note_on",
-                            "program_change",
-                            "set_tempo",
-                            "time_signature",
-                            "track_name"
-                        ], f"unsupported message type {m.type}"
+                            channel=message_channel,
+                            note=MidiNote(message.note),
+                            velocity=MidiVelocity(message.velocity))
+                case "set_tempo":
+                    assert isinstance(message, MetaMessage)
+                    event = TempoEvent(
+                        tick=tick, tempo=MidiTempo(message.tempo))
+                case "time_signature":
+                    assert isinstance(message, MetaMessage)
+                    assert message.clocks_per_click == 24, f"unsupported clocks_per_click value {message.clocks_per_click}"
+                    assert message.notated_32nd_notes_per_beat == 8, f"unsupported notated_32nd_notes_per_beat value {message.notated_32nd_notes_per_beat}"
+                    event = TimeSignatureEvent(
+                        tick=tick,
+                        time_signature=TimeSignature(
+                            numerator=Numerator(message.numerator),
+                            denominator=NoteValue.from_int(message.denominator)))
+                case _:
+                    assert message.type in [
+                        "control_change",
+                        "end_of_track",
+                        "key_signature",
+                        "note_off",
+                        "note_on",
+                        "program_change",
+                        "set_tempo",
+                        "time_signature",
+                        "track_name"
+                    ], f"unsupported message type {message.type}"
 
-                if event is not None:
-                    events = all_events.get(tick)
-                    if events is None:
-                        events = []
-                        all_events[tick] = events
-                    events.append(event)
+            if event is not None:
+                events = all_events.get(tick)
+                if events is None:
+                    events = []
+                    all_events[tick] = events
+                events.append(event)
 
         return cls(
             ticks_per_beat=file.ticks_per_beat,

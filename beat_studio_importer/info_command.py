@@ -86,11 +86,14 @@ def show_file_info(path: Path, dump: bool, exclude: list[str] | None) -> None:
     if dump:
         print()
         cprint(Fore.LIGHTYELLOW_EX, f"MIDI messages")
+
         time = 0.0
-        for message in file:
+        for message in file:  # yields messages with absolute time
             time += message.time
+
             if exclude is not None and message.type in exclude:
                 continue
+
             cprint(
                 Fore.LIGHTBLUE_EX,
                 "  ",
