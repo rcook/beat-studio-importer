@@ -61,7 +61,17 @@ class PatternInfo(Enum):
         return None
 
 
-def do_import(path: Path, note_name_map: MidiNoteNameMap | None, channel: MidiChannel | None, region_id: RegionId | None, quantize: NoteValue, name: str | None, override_tempo: BeatStudioTempo | None, repeat: int | None, add: bool, args: list[tuple[str, str]]) -> None:
+def do_import(
+        path: Path,
+        note_name_map: MidiNoteNameMap | None,
+        channel: MidiChannel | None,
+        region_id: RegionId | None,
+        quantize: NoteValue, name: str | None,
+        override_tempo: BeatStudioTempo | None,
+        repeat: int | None,
+        discard_boundary_hits: bool,
+        add: bool,
+        args: list[tuple[str, str]]) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
@@ -69,7 +79,9 @@ def do_import(path: Path, note_name_map: MidiNoteNameMap | None, channel: MidiCh
     summarize_midi_file(file)
 
     timeline = Timeline.build(file, channel=channel)
-    regions = Region.build_all(timeline)
+    regions = Region.build_all(
+        timeline,
+        discard_boundary_hits=discard_boundary_hits)
     region = select_region(path, regions, region_id)
 
     name = name or f"{path.stem} region {region.id}"

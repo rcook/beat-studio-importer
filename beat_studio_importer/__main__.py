@@ -90,6 +90,9 @@ class ImportArgs(Protocol):
     @property
     def add(self) -> bool: ...
 
+    @property
+    def discard_boundary_hits(self) -> bool: ...
+
 
 def do_import_args(args: ImportArgs) -> None:
     def wrap_optional[T, U](func: Callable[[T], U], obj: T | None) -> U | None:
@@ -105,6 +108,7 @@ def do_import_args(args: ImportArgs) -> None:
         override_tempo=wrap_optional(BeatStudioTempo, args.override_tempo),
         repeat=args.repeat,
         add=args.add,
+        discard_boundary_hits=args.discard_boundary_hits,
         args=summarize_args(args))
 
 
@@ -283,6 +287,14 @@ def main(cwd: Path, argv: list[str]) -> None:
         action=BooleanOptionalAction,
         default=False,
         help="add new pattern to Beat Studio patterns.beat file")
+    _ = p.add_argument(
+        "--discard-boundary-hits",
+        "-d",
+        dest="discard_boundary_hits",
+        metavar="DISCARD_BOUNDARY_HITS",
+        action=BooleanOptionalAction,
+        default=True,
+        help="discard notes at the end of the last measure (default) or extend pattern by a whole measure to include event")
 
     p = add_parser(
         parsers,
