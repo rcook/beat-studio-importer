@@ -20,12 +20,12 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.midi_note_name import MidiNoteName
 from beat_studio_importer.misc import MidiVelocity
-from beat_studio_importer.note_name import NoteName
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class Note:
-    name: NoteName
+    name: MidiNoteName
     velocity: MidiVelocity

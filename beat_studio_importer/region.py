@@ -26,7 +26,7 @@ from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.constants import BEAT_STUDIO_STEP_COUNT_RANGE, BEAT_STUDIO_TEMPO_RANGE
 from beat_studio_importer.descriptor import Descriptor
 from beat_studio_importer.misc import BeatStudioTempo, Bpm, MidiTempo, Numerator, Qpm, RegionId, Tick
-from beat_studio_importer.note_name_map import NoteNameMap
+from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.tempo_util import midi_tempo_to_qpm
 from beat_studio_importer.time_signature import TimeSignature
@@ -100,7 +100,7 @@ class Region:
     def bpm(self) -> Bpm:
         return self.time_signature.pulse.midi_tempo_to_bpm(self.tempo)
 
-    def render(self, name: str, note_name_map: NoteNameMap, quantize: NoteValue, override_tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
+    def render(self, name: str, note_name_map: MidiNoteNameMap, quantize: NoteValue, override_tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
         # What is Beat Studio tempo? QPM, BPM or something else?
         # Assume it's supposed to be QPM for now
         tempo = BeatStudioTempo(round(midi_tempo_to_qpm(self.tempo))) \
@@ -133,9 +133,17 @@ class Region:
         for e in self.notes:
             step, r = divmod(e.tick - self.start_tick, ticks_per_step)
             assert r == 0
-            note_name = note_name_map[e.note]
-            _, key, = note_name.value
-            hits = all_hits[key]
+
+            note_name = note_name_map.get(e.note)
+            if note_name is None:
+                if note_name_map.path is None:
+                    raise UserError(
+                        f"MIDI note {e.note} is not in default mapping")
+                else:
+                    raise UserError(
+                        f"MIDI note {e.note} has no mapping in file {note_name_map.path}")
+
+            hits = all_hits[note_name.beat_studio_note_name]
             velocity = BeatStudioVelocity.from_midi_velocity(e.velocity)
             hits[step] = velocity
             if repeat is None:

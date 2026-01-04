@@ -140,7 +140,7 @@ class BeatStudioPattern:
             parts = line.split(":")
             if len(parts) != 2:
                 raise ValueError(f"Invalid pattern {line}: invalid format")
-            note_name = BeatStudioNoteName.from_str(parts[0].strip())
+            note_name = BeatStudioNoteName.parse(parts[0].strip())
             temp = parts[1].strip()
             if len(temp) != step_count:
                 raise ValueError(f"Invalid pattern {line}: invalid step count")
@@ -157,7 +157,7 @@ class BeatStudioPattern:
 
     def print(self, file: "SupportsWrite[str] | None" = None) -> None:
         print(self._make_header(), file=file)
-        temp = list(map(lambda n: (n, n.value), self.hits.keys()))
+        temp = list(map(lambda n: (n, n.display), self.hits.keys()))
         note_names = sorted(temp, key=lambda p: p[1])
         width = max(map(lambda p: len(p[1]), temp))
         for note_name, label in note_names:

@@ -27,8 +27,8 @@ from argparse import _SubParsersAction, ArgumentParser, BooleanOptionalAction, N
 from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
+from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
 from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
-from beat_studio_importer.note_name_map import NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.play_command import do_play
 from beat_studio_importer.typing_util import checked_cast
@@ -62,7 +62,7 @@ def summarize_args(args: Namespace) -> list[tuple[str, str]]:
 def do_import_args(args: Namespace) -> None:
     note_name_map = None \
         if args.note_name_path is None \
-        else NoteNameMap.load(checked_cast(Path, args.note_name_path))
+        else MidiNoteNameMap.load(checked_cast(Path, args.note_name_path))
 
     temp0 = checked_cast(int, args.channel, optional=True)
     channel = None if temp0 is None else MidiChannel(temp0)

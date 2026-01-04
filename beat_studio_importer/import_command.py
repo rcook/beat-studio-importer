@@ -24,10 +24,10 @@ from beat_studio_importer.beat_studio_pattern import BeatStudioPattern
 from beat_studio_importer.beat_studio_util import default_beat_studio_profile
 from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.import_ui import select_region
+from beat_studio_importer.midi_note_name_map import DEFAULT_MIDI_NOTE_NAME_MAP, MidiNoteNameMap
 from beat_studio_importer.midi_source import MidiSource
 from beat_studio_importer.midi_util import summarize_midi_file
 from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
-from beat_studio_importer.note_name_map import DEFAULT_NOTE_NAME_MAP, NoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region import Region
 from beat_studio_importer.timeline import Timeline
@@ -59,7 +59,7 @@ class PatternInfo(Enum):
         return None
 
 
-def do_import(path: Path, note_name_map: NoteNameMap | None, channel: MidiChannel | None, region_id: RegionId | None, quantize: NoteValue, name: str | None, override_tempo: BeatStudioTempo | None, repeat: int | None, add: bool, args: list[tuple[str, str]]) -> None:
+def do_import(path: Path, note_name_map: MidiNoteNameMap | None, channel: MidiChannel | None, region_id: RegionId | None, quantize: NoteValue, name: str | None, override_tempo: BeatStudioTempo | None, repeat: int | None, add: bool, args: list[tuple[str, str]]) -> None:
     if not path.is_file():
         raise UserError(f"Input file {path} not found")
 
@@ -73,7 +73,7 @@ def do_import(path: Path, note_name_map: NoteNameMap | None, channel: MidiChanne
     region = select_region(source.path, regions, region_id)
 
     name = name or f"{source.path.stem} region {region.id}"
-    note_name_map = note_name_map or DEFAULT_NOTE_NAME_MAP
+    note_name_map = note_name_map or DEFAULT_MIDI_NOTE_NAME_MAP
     pattern = region.render(
         name,
         note_name_map,

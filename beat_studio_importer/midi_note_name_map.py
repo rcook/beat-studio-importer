@@ -20,8 +20,8 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.midi_note_name import MidiNoteName
 from beat_studio_importer.misc import MidiNote
-from beat_studio_importer.note_name import NoteName
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Self, cast
@@ -29,9 +29,10 @@ import yaml
 
 
 @dataclass(frozen=True)
-class NoteNameMap:
+class MidiNoteNameMap:
+    path: Path | None
     name: str
-    notes: dict[MidiNote, NoteName]
+    notes: dict[MidiNote, MidiNoteName]
 
     @classmethod
     def load(cls: type[Self], path: Path) -> Self:
@@ -40,25 +41,34 @@ class NoteNameMap:
                 dict[str, object],
                 yaml.load(stream=f, Loader=yaml.SafeLoader))
         return cls(
+            path=path,
             name=cast(str, obj["name"]),
             notes={
-                MidiNote(k): NoteName[v.upper()]
-                for k, v in cast(dict[int, str], obj["notes"]).items()
+                MidiNote(note): MidiNoteName.parse(s)
+                for note, s in cast(dict[int, str], obj["notes"]).items()
             })
 
-    def __getitem__(self, key: MidiNote) -> NoteName:
+    def __getitem__(self, key: MidiNote) -> MidiNoteName:
         return self.notes[key]
 
-    def save(self, path: Path) -> None:
+    def get(self, key: MidiNote) -> MidiNoteName | None:
+        return self.notes.get(key)
+
+    def save_as(self, path: Path) -> None:
         with path.open("wt") as f:
             yaml.dump({
                 "name": self.name,
                 "notes": {
-                    k: v.name.lower()
+                    k: v.display
                     for k, v in self.notes.items()
                 }
             }, stream=f)
 
 
-DEFAULT_NOTE_NAME_MAP: NoteNameMap = NoteNameMap.load(
-    Path(__file__).parent.parent / "note-maps" / "general-midi-drums.notemap")
+DEFAULT_MIDI_NOTE_NAME_MAP: MidiNoteNameMap = MidiNoteNameMap(
+    path=None,
+    name="(default)",
+    notes={
+        x.midi_note: x
+        for x in MidiNoteName
+    })
