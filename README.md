@@ -58,6 +58,22 @@ basedpyright
 pytest
 ```
 
+## Specification
+
+According to the comment at the top of `patterns.beat` from Beat Studio
+0.3.3-ALPHA-PRO, the format of this file is as follows:
+
+```
+# MIDI Drum Patterns Collection
+# Format: ["PATTERN_NAME" - LENGTH - TEMPO - NOTE_LENGTH - TIME_SIGNATURE] followed by drum lines
+# Each line represents one drum type, each character represents one note beat
+# Numbers 1-9 = velocity levels, . = rest
+# Drums: CRASH, CRASH2, RIDE, HI-HAT, OPEN-HIHAT, KICK, SNARE, HI-TOM, MED-TOM, LOW-TOM
+# Length can be 4-8192 beats, Tempo in BPM (60-200)
+# Note Length: 16 (default), 32, 64, 8, 4, etc.
+# Time Signature: 4/4 (default), 3/4, 6/8, 5/4, 7/8, etc.
+```
+
 ## Licence
 
 [MIT License](LICENSE)
