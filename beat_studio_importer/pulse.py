@@ -26,6 +26,7 @@ from enum import Enum, auto, unique
 from fractions import Fraction
 
 
+# https://music.stackexchange.com/questions/44197/how-to-convert-a-dotted-quarter-note-tempo-to-bpm
 @unique
 class Pulse(Enum):
     SIXTEENTH = auto(), Fraction(1, 4), "16th note"
