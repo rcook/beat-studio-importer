@@ -4,5 +4,6 @@
     "**/typings"
   ],
   "reportMissingTypeStubs": false,
+  "reportPrivateUsage": false,
   "stubPath": "typings"
 }

@@ -20,9 +20,6 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-# pyright: reportAny=false
-# pyright: reportPrivateUsage=false
-
 from argparse import _SubParsersAction, ArgumentParser, BooleanOptionalAction, Namespace
 from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.import_command import do_import
@@ -32,15 +29,18 @@ from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.play_command import do_play
 from beat_studio_importer.remap_command import do_remap
-from beat_studio_importer.typing_util import checked_cast
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from pathlib import Path
-from typing import cast
+from typing import Callable, Protocol, cast, runtime_checkable
 import sys
 
 
-def summarize_args(args: Namespace) -> list[tuple[str, str]]:
+type ArgsType = type
+type Func[T] = Callable[[T], None]
+
+
+def summarize_args(args: object) -> list[tuple[str, str]]:
     def render_value(value: object) -> str:
         match value:
             case bool() as x: return str(x).lower()
@@ -60,55 +60,108 @@ def summarize_args(args: Namespace) -> list[tuple[str, str]]:
     return sorted(attrs, key=lambda p: p[0])
 
 
-def do_import_args(args: Namespace) -> None:
+@runtime_checkable
+class ImportArgs(Protocol):
+    @property
+    def path(self) -> Path: ...
+
+    @property
+    def note_name_path(self) -> Path | None: ...
+
+    @property
+    def channel(self) -> int | None: ...
+
+    @property
+    def region(self) -> int | None: ...
+
+    @property
+    def quantize(self) -> int: ...
+
+    @property
+    def override_tempo(self) -> int | None: ...
+
+    @property
+    def name(self) -> str | None: ...
+
+    @property
+    def repeat(self) -> int | None: ...
+
+    @property
+    def add(self) -> bool: ...
+
+
+def do_import_args(args: ImportArgs) -> None:
     note_name_map = None \
         if args.note_name_path is None \
-        else MidiNoteNameMap.load(checked_cast(Path, args.note_name_path))
+        else MidiNoteNameMap.load(args.note_name_path)
 
-    temp0 = checked_cast(int, args.channel, optional=True)
-    channel = None if temp0 is None else MidiChannel(temp0)
+    channel = None \
+        if args.channel is None \
+        else MidiChannel(args.channel)
 
-    temp1 = checked_cast(int, args.region, optional=True)
-    region_id = None if temp1 is None else RegionId(temp1)
+    region_id = None \
+        if args.region is None \
+        else RegionId(args.region)
 
-    quantize = NoteValue.from_int(checked_cast(int, args.quantize))
+    quantize = NoteValue.from_int(args.quantize)
 
-    temp2 = checked_cast(int, args.override_tempo, optional=True)
-    override_tempo = None if temp2 is None else BeatStudioTempo(temp2)
+    override_tempo = None \
+        if args.override_tempo is None \
+        else BeatStudioTempo(args.override_tempo)
 
     do_import(
-        path=checked_cast(Path, args.path),
+        path=args.path,
         note_name_map=note_name_map,
         channel=channel,
         region_id=region_id,
         quantize=quantize,
-        name=checked_cast(str, args.name, optional=True),
+        name=args.name,
         override_tempo=override_tempo,
-        repeat=checked_cast(int, args.repeat, optional=True),
-        add=checked_cast(bool, args.add),
+        repeat=args.repeat,
+        add=args.add,
         args=summarize_args(args))
 
 
-def do_info_args(args: Namespace) -> None:
-    do_info(path=checked_cast(Path, args.path, optional=True))
+@runtime_checkable
+class InfoArgs(Protocol):
+    @property
+    def path(self) -> Path | None: ...
 
 
-def do_play_args(args: Namespace) -> None:
-    temp0 = checked_cast(bool, args.force_channel_10, optional=True)
-    force_channel_10 = temp0 or False
+def do_info_args(args: InfoArgs) -> None:
+    do_info(path=args.path)
 
-    port_name = checked_cast(str, args.port_name, optional=True)
 
+@runtime_checkable
+class PlayArgs(Protocol):
+    @property
+    def path(self) -> Path: ...
+
+    @property
+    def port_name(self) -> str | None: ...
+
+    @property
+    def force_channel_10(self) -> bool | None: ...
+
+
+def do_play_args(args: PlayArgs) -> None:
     do_play(
-        path=checked_cast(Path, args.path),
-        port_name=port_name,
-        force_channel_10=force_channel_10)
+        path=args.path,
+        port_name=args.port_name,
+        force_channel_10=args.force_channel_10 or False)
 
 
-def do_remap_args(args: Namespace) -> None:
-    do_remap(
-        path=checked_cast(Path, args.path),
-        output_path=checked_cast(Path, args.output_path))
+@runtime_checkable
+class RemapArgs(Protocol):
+    @property
+    def path(self) -> Path: ...
+
+    @property
+    def output_path(self) -> Path: ...
+
+
+def do_remap_args(args: RemapArgs) -> None:
+    do_remap(path=args.path, output_path=args.output_path)
 
 
 def resolve_path(cwd: Path, s: str) -> Path:
@@ -155,11 +208,13 @@ def add_note_map_path_arg(parser: ArgumentParser, cwd: Path) -> None:
 
 
 def main(cwd: Path, argv: list[str]) -> None:
-    def add_parser(parsers: "_SubParsersAction[ArgumentParser]", name: str, help: str) -> ArgumentParser:
-        return parsers.add_parser(
+    def add_parser[T](parsers: "_SubParsersAction[ArgumentParser]", name: str, help: str, args_cls: type[T], func: Func[T]) -> ArgumentParser:
+        p = parsers.add_parser(
             name=name,
             help=help,
             description=help[0].upper() + help[1:])
+        p.set_defaults(handler=(args_cls, func))
+        return p
 
     parser = ArgumentParser(
         prog=PROGRAM_NAME,
@@ -167,8 +222,12 @@ def main(cwd: Path, argv: list[str]) -> None:
         epilog=PROGRAM_URL)
     parsers = parser.add_subparsers(required=True)
 
-    p = add_parser(parsers, "import", "import pattern from MIDI file")
-    p.set_defaults(func=do_import_args)
+    p = add_parser(
+        parsers,
+        "import",
+        "import pattern from MIDI file",
+        ImportArgs,  # type: ignore[type-abstract]
+        do_import_args)
     add_path_arg(p, cwd)
     add_note_map_path_arg(p, cwd)
     _ = p.add_argument(
@@ -229,12 +288,17 @@ def main(cwd: Path, argv: list[str]) -> None:
     p = add_parser(
         parsers,
         "info",
-        "show information about Beat Studio profile and (optionally) contents of a MIDI file")
-    p.set_defaults(func=do_info_args)
+        "show information about Beat Studio profile and (optionally) contents of a MIDI file",
+        InfoArgs,  # type: ignore[type-abstract]
+        do_info_args)
     add_path_arg(p, cwd, optional=True)
 
-    p = add_parser(parsers, "play", "play MIDI file")
-    p.set_defaults(func=do_play_args)
+    p = add_parser(
+        parsers,
+        "play",
+        "play MIDI file",
+        PlayArgs,  # type: ignore[type-abstract]
+        do_play_args)
     add_path_arg(p, cwd)
     _ = p.add_argument(
         "--10",
@@ -252,15 +316,23 @@ def main(cwd: Path, argv: list[str]) -> None:
         default=None,
         help="MIDI port name")
 
-    p = add_parser(parsers, "remap", "remap all notes to MIDI channel 10")
-    p.set_defaults(func=do_remap_args)
+    p = add_parser(
+        parsers,
+        "remap",
+        "remap all notes to MIDI channel 10",
+        RemapArgs,  # type: ignore[type-abstract]
+        do_remap_args)
     add_path_arg(p, cwd)
     add_output_path_arg(p, cwd)
 
     args = parser.parse_args(argv)
-    result: object = None
+    args_cls, func = cast(tuple[ArgsType, Func[Namespace]], args.handler)
+    assert \
+        isinstance(args, args_cls), \
+        f"type of arguments {type(args)} does not conform to protocol {args_cls}"
+
     try:
-        result = args.func(args)
+        func(args)
     except KeyboardInterrupt:
         print("\n",
               Fore.LIGHTRED_EX,
@@ -272,8 +344,3 @@ def main(cwd: Path, argv: list[str]) -> None:
     except UserError as e:
         print(Fore.LIGHTRED_EX, str(e), Style.RESET_ALL, sep="", file=sys.stderr)
         sys.exit(1)
-
-    if result is None:
-        pass
-    else:
-        raise NotImplementedError()
