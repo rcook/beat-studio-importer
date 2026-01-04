@@ -25,12 +25,13 @@ from beat_studio_importer.beat_studio_pattern import BeatStudioPattern, Hits
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.constants import BEAT_STUDIO_STEP_COUNT_RANGE, BEAT_STUDIO_TEMPO_RANGE
 from beat_studio_importer.descriptor import Descriptor
+from beat_studio_importer.events import NoteEvent, TempoEvent, TimeSignatureEvent
 from beat_studio_importer.misc import BeatStudioTempo, Bpm, MidiTempo, Numerator, Qpm, RegionId, Tick
 from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.tempo_util import midi_tempo_to_qpm
 from beat_studio_importer.time_signature import TimeSignature
-from beat_studio_importer.timeline import NoteEvent, TempoEvent, TimeSignatureEvent, Timeline
+from beat_studio_importer.timeline import Timeline
 from beat_studio_importer.user_error import UserError
 from dataclasses import dataclass, field
 from functools import cached_property, reduce

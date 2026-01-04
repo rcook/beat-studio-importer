@@ -20,50 +20,11 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.events import Event, NoteEvent, TempoEvent, TimeSignatureEvent
 from beat_studio_importer.misc import Denominator, MidiChannel, MidiNote, MidiTempo, MidiVelocity, Numerator, Tick
 from dataclasses import dataclass
 from mido import Message, MetaMessage, MidiFile
 from typing import Self
-
-
-@dataclass(frozen=True)
-class EventBase:
-    tick: Tick
-
-
-@dataclass(frozen=True)
-class TempoEvent(EventBase):
-    tempo: MidiTempo
-
-    @classmethod
-    def from_message(cls: type[Self], tick: Tick, message: MetaMessage) -> Self:
-        return cls(tick=tick, tempo=MidiTempo(message.tempo))
-
-
-@dataclass(frozen=True)
-class TimeSignatureEvent(EventBase):
-    numerator: Numerator
-    denominator: Denominator
-
-    @classmethod
-    def from_message(cls: type[Self], tick: Tick, message: MetaMessage) -> Self:
-        assert message.clocks_per_click == 24, f"unsupported clocks_per_click value {message.clocks_per_click}"
-        assert message.notated_32nd_notes_per_beat == 8, f"unsupported notated_32nd_notes_per_beat value {message.notated_32nd_notes_per_beat}"
-        return cls(tick=tick, numerator=Numerator(message.numerator), denominator=Denominator(message.denominator))
-
-
-@dataclass(frozen=True)
-class NoteEvent(EventBase):
-    channel: MidiChannel
-    note: MidiNote
-    velocity: MidiVelocity
-
-    @classmethod
-    def from_message(cls: type[Self], tick: Tick, message: Message) -> Self:
-        return cls(tick=tick, channel=MidiChannel(message.channel + 1), note=MidiNote(message.note), velocity=MidiVelocity(message.velocity))
-
-
-type Event = TempoEvent | TimeSignatureEvent | NoteEvent
 
 
 @dataclass(frozen=True)
@@ -83,15 +44,24 @@ class Timeline:
                 match m.type:
                     case "note_on":
                         assert isinstance(m, Message)
-                        temp = NoteEvent.from_message(tick, m)
-                        if channel is None or temp.channel == channel:
-                            event = temp
+                        message_channel = MidiChannel(m.channel + 1)
+                        if channel is None or message_channel == channel:
+                            event = NoteEvent(
+                                tick=tick,
+                                channel=message_channel,
+                                note=MidiNote(m.note),
+                                velocity=MidiVelocity(m.velocity))
                     case "set_tempo":
                         assert isinstance(m, MetaMessage)
-                        event = TempoEvent.from_message(tick, m)
+                        event = TempoEvent(tick=tick, tempo=MidiTempo(m.tempo))
                     case "time_signature":
                         assert isinstance(m, MetaMessage)
-                        event = TimeSignatureEvent.from_message(tick, m)
+                        assert m.clocks_per_click == 24, f"unsupported clocks_per_click value {m.clocks_per_click}"
+                        assert m.notated_32nd_notes_per_beat == 8, f"unsupported notated_32nd_notes_per_beat value {m.notated_32nd_notes_per_beat}"
+                        event = TimeSignatureEvent(
+                            tick=tick,
+                            numerator=Numerator(m.numerator),
+                            denominator=Denominator(m.denominator))
                     case _:
                         assert m.type in [
                             "control_change",
