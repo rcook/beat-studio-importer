@@ -31,6 +31,7 @@ from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
 from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.play_command import do_play
+from beat_studio_importer.remap_command import do_remap
 from beat_studio_importer.typing_util import checked_cast
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
@@ -104,6 +105,12 @@ def do_play_args(args: Namespace) -> None:
         force_channel_10=force_channel_10)
 
 
+def do_remap_args(args: Namespace) -> None:
+    do_remap(
+        path=checked_cast(Path, args.path),
+        output_path=checked_cast(Path, args.output_path))
+
+
 def resolve_path(cwd: Path, s: str) -> Path:
     return (cwd / Path(s).expanduser()).resolve()
 
@@ -118,6 +125,18 @@ def add_path_arg(parser: ArgumentParser, cwd: Path, optional: bool = False) -> N
         type=resolved_path,
         nargs="?" if optional else None,
         help="path of file to import")
+
+
+def add_output_path_arg(parser: ArgumentParser, cwd: Path, optional: bool = False) -> None:
+    def resolved_path(s: str) -> Path:
+        return resolve_path(cwd, s)
+
+    _ = parser.add_argument(
+        dest="output_path",
+        metavar="OUTPUT_PATH",
+        type=resolved_path,
+        nargs="?" if optional else None,
+        help="output path")
 
 
 def add_note_map_path_arg(parser: ArgumentParser, cwd: Path) -> None:
@@ -232,6 +251,11 @@ def main(cwd: Path, argv: list[str]) -> None:
         type=str,
         default=None,
         help="MIDI port name")
+
+    p = add_parser(parsers, "remap", "remap all notes to MIDI channel 10")
+    p.set_defaults(func=do_remap_args)
+    add_path_arg(p, cwd)
+    add_output_path_arg(p, cwd)
 
     args = parser.parse_args(argv)
     result: object = None
