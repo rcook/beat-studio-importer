@@ -319,12 +319,13 @@ def main(cwd: Path, argv: list[str]) -> None:
     try:
         func(args)
     except KeyboardInterrupt:
-        print("\n",
-              Fore.LIGHTRED_EX,
-              "Operation cancelled",
-              Style.RESET_ALL,
-              sep="",
-              file=sys.stderr)
+        print(
+            "\n",
+            Fore.LIGHTRED_EX,
+            "Operation cancelled",
+            Style.RESET_ALL,
+            sep="",
+            file=sys.stderr)
         sys.exit(2)
     except UserError as e:
         print(Fore.LIGHTRED_EX, str(e), Style.RESET_ALL, sep="", file=sys.stderr)
