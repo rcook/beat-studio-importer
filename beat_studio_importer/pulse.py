@@ -31,13 +31,18 @@ class Pulse(Enum):
     SIXTEENTH = auto(), Fraction(1, 4), "16th note"
     EIGHTH = auto(), Fraction(1, 2), "8th note"
     DOTTED_EIGHTH = auto(), Fraction(3, 4), "dotted 8th note"
-    QUARTER = auto(), 1, "quarter note"
+    QUARTER = auto(), Fraction(1), "quarter note"
     DOTTED_QUARTER = auto(), Fraction(3, 2), "dotted quarter note"
-    HALF = auto(), 2, "half-note"
-    WHOLE = auto(), 4, "whole note"
+    HALF = auto(), Fraction(2), "half-note"
+    WHOLE = auto(), Fraction(4), "whole note"
 
     # Tempo as beats (pulses) per minute
     def midi_tempo_to_bpm(self, tempo: MidiTempo) -> Bpm:
         qpm = midi_tempo_to_qpm(tempo)
-        multiplier = self.value[1]
-        return Bpm(qpm / multiplier)
+        return Bpm(qpm / self.multiplier)
+
+    @property
+    def multiplier(self) -> Fraction: return self.value[1]
+
+    @property
+    def display(self) -> str: return self.value[2]

@@ -239,8 +239,8 @@ def main(cwd: Path, argv: list[str]) -> None:
         dest="quantize",
         metavar="QUANTIZE",
         type=int,
-        choices=sorted(member.value[0] for member in NoteValue),
-        default=NoteValue.SIXTEENTH.value[0],
+        choices=sorted(member.int_value for member in NoteValue),
+        default=NoteValue.SIXTEENTH.int_value,
         help="quantize step (4=quarter note, 8=eighth etc.)")
     _ = p.add_argument(
         "--name",

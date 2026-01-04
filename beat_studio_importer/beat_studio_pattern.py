@@ -172,4 +172,4 @@ class BeatStudioPattern:
             raise ValueError(f"Invalid pattern name {self.name}")
 
         encoded_name = self.name.replace("\"", "\\\"")
-        return f"[\"{encoded_name}\" - {self.step_count} - {self.tempo} - {self.quantize.value[0]} - {self.time_signature}]"
+        return f"[\"{encoded_name}\" - {self.step_count} - {self.tempo} - {self.quantize.int_value} - {self.time_signature}]"

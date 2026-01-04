@@ -38,14 +38,14 @@ class TimeSignature:
 
     @override
     def __repr__(self) -> str:
-        return f"{self.numerator}/{self.denominator.value[0]}"
+        return f"{self.numerator}/{self.denominator.int_value}"
 
     # Reference: https://en.wikipedia.org/wiki/Time_signature
     @cached_property
     def pulse(self) -> Pulse:
         is_simple_metre = self.numerator in [1, 2, 3, 4]
         if is_simple_metre:
-            return self.denominator.value[1]
+            return self.denominator.pulse
 
         is_compound_metre = self.numerator % 3 == 0
         if is_compound_metre:
@@ -55,11 +55,11 @@ class TimeSignature:
                 case _: raise NotImplementedError(f"Unimplemented time signature {self}")
 
         # Complex metre
-        return self.denominator.value[1]
+        return self.denominator.pulse
 
     def ticks_per_bar(self, ticks_per_beat: int) -> int:
         n = 4 * ticks_per_beat * self.numerator
-        q, r = divmod(n, self.denominator.value[0])
+        q, r = divmod(n, self.denominator.int_value)
         if r != 0:
             raise ValueError(f"Invalid PPQN {ticks_per_beat}")
         return q

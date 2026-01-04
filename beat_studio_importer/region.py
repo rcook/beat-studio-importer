@@ -112,7 +112,7 @@ class Region:
             raise UserError(
                 f"Tempo {tempo} is outside allowed range {BEAT_STUDIO_TEMPO_RANGE}: specify a valid tempo using --tempo")
 
-        ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.value[0])
+        ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.int_value)
         assert r == 0
 
         tick_count = self.end_tick - self.start_tick

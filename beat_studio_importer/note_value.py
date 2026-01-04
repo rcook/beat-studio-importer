@@ -35,6 +35,12 @@ class NoteValue(Enum):
     @staticmethod
     def from_int(value: int) -> "NoteValue":
         for member in NoteValue:
-            if member.value[0] == value:
+            if member.int_value == value:
                 return member
         raise ValueError(f"Invalid note value {value}")
+
+    @property
+    def int_value(self) -> int: return self.value[0]
+
+    @property
+    def pulse(self) -> Pulse: return self.value[1]

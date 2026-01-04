@@ -146,7 +146,7 @@ def summarize_pattern(pattern: BeatStudioPattern, region: Region, args: list[tup
     comments = [
         f"# Pattern {pattern.name}",
         f"#   Time signature: {region.time_signature}",
-        f"#   Pulse: {region.time_signature.pulse.value[2]}",
+        f"#   Pulse: {region.time_signature.pulse.display}",
         f"#   Tempo (BPM): {region.bpm}",
         f"#   Tempo (QPM): {region.qpm}",
         f"#   Tempo (MIDI): {region.tempo}",
