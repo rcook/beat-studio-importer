@@ -20,8 +20,8 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.misc import Bpm, MidiTempo
 from beat_studio_importer.pulse import Pulse
+from beat_studio_importer.tempos import Bpm, MidiTempo
 import pytest
 
 

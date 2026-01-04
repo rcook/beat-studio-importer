@@ -21,7 +21,10 @@
 #
 
 from beat_studio_importer.events import Event, NoteEvent, TempoEvent, TimeSignatureEvent
-from beat_studio_importer.misc import Denominator, MidiChannel, MidiNote, MidiTempo, MidiVelocity, Numerator, Tick
+from beat_studio_importer.misc import MidiChannel, MidiNote, MidiVelocity, Tick
+from beat_studio_importer.note_value import NoteValue
+from beat_studio_importer.tempos import MidiTempo
+from beat_studio_importer.time_signature import Numerator, TimeSignature
 from dataclasses import dataclass
 from mido import Message, MetaMessage, MidiFile
 from typing import Self
@@ -60,8 +63,9 @@ class Timeline:
                         assert m.notated_32nd_notes_per_beat == 8, f"unsupported notated_32nd_notes_per_beat value {m.notated_32nd_notes_per_beat}"
                         event = TimeSignatureEvent(
                             tick=tick,
-                            numerator=Numerator(m.numerator),
-                            denominator=Denominator(m.denominator))
+                            time_signature=TimeSignature(
+                                numerator=Numerator(m.numerator),
+                                denominator=NoteValue.from_int(m.denominator)))
                     case _:
                         assert m.type in [
                             "control_change",

@@ -25,10 +25,11 @@ from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
 from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
-from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
+from beat_studio_importer.misc import MidiChannel, RegionId
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.play_command import do_play
 from beat_studio_importer.remap_command import do_remap
+from beat_studio_importer.tempos import BeatStudioTempo
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from pathlib import Path

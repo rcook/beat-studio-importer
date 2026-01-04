@@ -26,11 +26,11 @@ from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.constants import BEAT_STUDIO_STEP_COUNT_RANGE, BEAT_STUDIO_TEMPO_RANGE
 from beat_studio_importer.descriptor import Descriptor
 from beat_studio_importer.events import NoteEvent, TempoEvent, TimeSignatureEvent
-from beat_studio_importer.misc import BeatStudioTempo, Bpm, MidiTempo, Numerator, Qpm, RegionId, Tick
+from beat_studio_importer.misc import RegionId, Tick
 from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
 from beat_studio_importer.note_value import NoteValue
-from beat_studio_importer.tempo_util import midi_tempo_to_qpm
-from beat_studio_importer.time_signature import TimeSignature
+from beat_studio_importer.tempos import BeatStudioTempo, Bpm, MidiTempo, Qpm, midi_tempo_to_beat_studio_tempo, midi_tempo_to_qpm
+from beat_studio_importer.time_signature import Numerator, TimeSignature
 from beat_studio_importer.timeline import Timeline
 from beat_studio_importer.user_error import UserError
 from dataclasses import dataclass, field
@@ -38,7 +38,7 @@ from functools import cached_property, reduce
 from typing import Self
 
 
-DEFAULT_TEMPO: MidiTempo = MidiTempo(120)
+DEFAULT_MIDI_TEMPO: MidiTempo = MidiTempo(500_000)  # 120 qpm
 DEFAULT_TIME_SIGNATURE: TimeSignature = TimeSignature(
     numerator=Numerator(4),
     denominator=NoteValue.QUARTER)
@@ -104,7 +104,7 @@ class Region:
     def render(self, name: str, note_name_map: MidiNoteNameMap, quantize: NoteValue, override_tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
         # What is Beat Studio tempo? QPM, BPM or something else?
         # Assume it's supposed to be QPM for now
-        tempo = BeatStudioTempo(round(midi_tempo_to_qpm(self.tempo))) \
+        tempo = midi_tempo_to_beat_studio_tempo(self.tempo) \
             if override_tempo is None \
             else override_tempo
         if not (BEAT_STUDIO_TEMPO_RANGE[0] <= tempo <= BEAT_STUDIO_TEMPO_RANGE[1]):
@@ -167,7 +167,7 @@ class RegionBuildState[R: Region]:
     region_cls: type[R]
     timeline: Timeline
     discard_boundary_hits: bool
-    tempo: MidiTempo = DEFAULT_TEMPO
+    tempo: MidiTempo = DEFAULT_MIDI_TEMPO
     time_signature: TimeSignature = DEFAULT_TIME_SIGNATURE
     start_tick: Tick = Tick(0)
     tempo_event: TempoEvent | None = None
@@ -195,9 +195,7 @@ class RegionBuildState[R: Region]:
             temp_time_signature = self.time_signature
         else:
             assert self.time_signature_event.tick == self.start_tick
-            temp_time_signature = TimeSignature(
-                numerator=self.time_signature_event.numerator,
-                denominator=NoteValue.from_int(self.time_signature_event.denominator))
+            temp_time_signature = self.time_signature_event.time_signature
 
         if end_tick is None:
             end_tick = reduce(reduce_func, self.note_events, self.start_tick)

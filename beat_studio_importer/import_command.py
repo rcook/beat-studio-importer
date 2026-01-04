@@ -27,9 +27,10 @@ from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.import_ui import select_region
 from beat_studio_importer.midi_note_name_map import DEFAULT_MIDI_NOTE_NAME_MAP, MidiNoteNameMap
 from beat_studio_importer.midi_util import summarize_midi_file
-from beat_studio_importer.misc import BeatStudioTempo, MidiChannel, RegionId
+from beat_studio_importer.misc import MidiChannel, RegionId
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.region import Region
+from beat_studio_importer.tempos import BeatStudioTempo
 from beat_studio_importer.timeline import Timeline
 from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style

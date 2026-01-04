@@ -23,9 +23,9 @@
 from beat_studio_importer.beat_studio_note_name import BeatStudioNoteName
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.constants import BEAT_STUDIO_DEFAULT_TIME_SIGNATURE
-from beat_studio_importer.misc import BeatStudioTempo, Numerator
 from beat_studio_importer.note_value import NoteValue
-from beat_studio_importer.time_signature import TimeSignature
+from beat_studio_importer.tempos import BeatStudioTempo
+from beat_studio_importer.time_signature import Numerator, TimeSignature
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Self
@@ -41,7 +41,7 @@ type Hits = dict[BeatStudioNoteName, list[BeatStudioVelocity | None]]
 @dataclass(frozen=True)
 class BeatStudioPattern:
     name: str
-    tempo: BeatStudioTempo  # Is this QPM, BPM or something else?
+    tempo: BeatStudioTempo
     time_signature: TimeSignature
     quantize: NoteValue
     step_count: int
@@ -126,11 +126,9 @@ class BeatStudioPattern:
                 raise ValueError(
                     f"Invalid header {header}: invalid time signature")
 
-            numerator = Numerator(int(parts[0]))
-            denominator = NoteValue.from_int(int(parts[1]))
             time_signature = TimeSignature(
-                numerator=numerator,
-                denominator=denominator)
+                numerator=Numerator(int(parts[0])),
+                denominator=NoteValue.from_int(int(parts[1])))
         else:
             time_signature = BEAT_STUDIO_DEFAULT_TIME_SIGNATURE
 

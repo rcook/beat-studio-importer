@@ -20,18 +20,11 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from fractions import Fraction
 from typing import NewType
 
 
-BeatStudioTempo = NewType("BeatStudioTempo", int)
-Bpm = NewType("Bpm", Fraction)
-Denominator = NewType("Denominator", int)
 MidiChannel = NewType("MidiChannel", int)
 MidiNote = NewType("MidiNote", int)
-MidiTempo = NewType("MidiTempo", int)
 MidiVelocity = NewType("MidiVelocity", int)
-Numerator = NewType("Numerator", int)
-Qpm = NewType("Qpm", Fraction)
 RegionId = NewType("RegionId", int)
 Tick = NewType("Tick", int)

@@ -20,12 +20,15 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.misc import Bpm, MidiTempo, Numerator
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.pulse import Pulse
+from beat_studio_importer.tempos import Bpm, MidiTempo
 from dataclasses import dataclass
 from functools import cached_property
-from typing import override
+from typing import NewType, override
+
+
+Numerator = NewType("Numerator", int)
 
 
 @dataclass(frozen=True)

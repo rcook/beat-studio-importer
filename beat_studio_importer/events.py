@@ -20,7 +20,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.misc import Denominator, MidiChannel, MidiNote, MidiTempo, MidiVelocity, Numerator, Tick
+from beat_studio_importer.misc import MidiChannel, MidiNote, MidiVelocity, Tick
+from beat_studio_importer.tempos import MidiTempo
+from beat_studio_importer.time_signature import TimeSignature
 from dataclasses import dataclass
 
 
@@ -36,8 +38,7 @@ class TempoEvent(EventBase):
 
 @dataclass(frozen=True)
 class TimeSignatureEvent(EventBase):
-    numerator: Numerator
-    denominator: Denominator
+    time_signature: TimeSignature
 
 
 @dataclass(frozen=True)

@@ -20,10 +20,10 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.misc import MidiTempo, Numerator
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.pulse import Pulse
-from beat_studio_importer.time_signature import TimeSignature
+from beat_studio_importer.tempos import MidiTempo
+from beat_studio_importer.time_signature import Numerator, TimeSignature
 from tests.util import is_close_tempo
 import pytest
 

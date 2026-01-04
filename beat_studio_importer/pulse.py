@@ -20,8 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.misc import Bpm, MidiTempo
-from beat_studio_importer.tempo_util import midi_tempo_to_qpm
+from beat_studio_importer.tempos import Bpm, MidiTempo, midi_tempo_to_qpm
 from enum import Enum, auto, unique
 from fractions import Fraction
 
