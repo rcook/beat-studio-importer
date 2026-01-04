@@ -84,7 +84,10 @@ def do_import(
         discard_boundary_hits=discard_boundary_hits)
     region = select_region(path, regions, region_id)
 
-    name = name or f"{path.stem} region {region.id}"
+    if name is None:
+        name = path.stem \
+            if len(regions) == 1 \
+            else f"{path.stem} region {region.id}"
     note_name_map = note_name_map or DEFAULT_MIDI_NOTE_NAME_MAP
 
     if override_tempo is None:
