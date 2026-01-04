@@ -7,6 +7,7 @@ from .backends.backend import Backend
 from .messages import MAX_PITCHWHEEL, MAX_SONGPOS, MIN_PITCHWHEEL, MIN_SONGPOS, Message, format_as_string, parse_string, parse_string_stream
 from .midifiles import KeySignatureError, MetaMessage, MidiFile, MidiTrack, UnknownMetaMessage, bpm2tempo, merge_tracks, second2tick, tempo2bpm, tick2second
 from .parser import Parser, parse, parse_all
+from .ports import BaseOutput
 from .syx import read_syx_file, write_syx_file
 from .version import version_info
 
@@ -116,3 +117,9 @@ def set_backend(name=..., load=...):  # -> None:
     in top level mido module. The module will be loaded the first
     time one of those functions is called."""
     ...
+
+
+def get_output_names() -> list[str]: ...
+
+
+def open_output(name: str | None = ...) -> BaseOutput: ...

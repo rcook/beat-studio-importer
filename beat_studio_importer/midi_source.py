@@ -23,7 +23,7 @@
 from dataclasses import dataclass
 from mido import MidiFile, MidiTrack
 from pathlib import Path
-from typing import Self, cast
+from typing import Self
 
 
 @dataclass(frozen=True)
@@ -36,9 +36,8 @@ class MidiSource:
     @classmethod
     def load(cls: type[Self], path: Path) -> Self:
         file = MidiFile(path)
-        tracks = cast(list[MidiTrack], file.tracks)
         return cls(
             path=path,
             file=file,
             ticks_per_beat=file.ticks_per_beat,
-            tracks=tracks)
+            tracks=file.tracks)

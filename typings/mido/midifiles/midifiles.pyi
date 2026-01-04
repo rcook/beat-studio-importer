@@ -18,6 +18,14 @@ http://stackoverflow.com/questions/2984608/midi-delta-time
 http://www.recordingblogs.com/sa/tabid/82/EntryId/44/MIDI-Part-XIII-Delta-time-a
 http://www.sonicspot.com/guide/midifiles.html
 """
+
+
+from collections.abc import Generator
+from datetime import time
+from mido import MidiTrack
+from mido.messages import BaseMessage
+from pathlib import Path
+
 DEFAULT_TEMPO = ...
 DEFAULT_TICKS_PER_BEAT = ...
 MAX_MESSAGE_LENGTH = ...
@@ -91,8 +99,17 @@ def get_seconds_per_tick(tempo, ticks_per_beat):
 
 
 class MidiFile:
-    def __init__(self, filename=..., file=..., type=..., ticks_per_beat=..., charset=..., debug=..., clip=..., tracks=...) -> None:
+    def __init__(self, filename: Path = ..., file=..., type=..., ticks_per_beat=..., charset=..., debug=..., clip=..., tracks=...) -> None:
         ...
+
+    @property
+    def filename(self) -> Path: ...
+
+    @property
+    def ticks_per_beat(self) -> int: ...
+
+    @property
+    def tracks(self) -> list[MidiTrack]: ...
 
     @property
     def merged_track(self):  # -> MidiTrack:
@@ -123,7 +140,7 @@ class MidiFile:
         ...
 
     # -> Generator[Any | MetaMessage, Any, None]:
-    def play(self, meta_messages=..., now=...):
+    def play(self, meta_messages: bool = ..., now: time = ...) -> Generator[BaseMessage, None, None]:
         """Play back all tracks.
 
         The generator will sleep between each message by

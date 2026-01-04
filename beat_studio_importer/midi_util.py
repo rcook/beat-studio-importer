@@ -26,7 +26,6 @@ from collections.abc import Iterable
 from colorama import Fore
 from mido import MidiFile, MidiTrack
 from mido.messages import BaseMessage
-from pathlib import Path
 from typing import cast
 
 
@@ -49,7 +48,7 @@ def summarize_midi_file(file: MidiFile) -> None:
                 midi_channel = raw_channel + 1
                 midi_channels.add(midi_channel)
 
-    print_key_value("File", cast(Path, file.filename))
+    print_key_value("File", file.filename)
     print_key_value("Ticks per beat", file.ticks_per_beat)
 
     cprint(Fore.LIGHTBLUE_EX, "Tracks:")
