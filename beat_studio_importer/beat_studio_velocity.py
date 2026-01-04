@@ -36,5 +36,5 @@ class BeatStudioVelocity(int):
         return super().__new__(cls, value)
 
     @classmethod
-    def from_midi_velocity(cls: type[Self], value: MidiVelocity) -> Self:
-        return cls(MIDI_VELOCITY_RANGE.downscale(BEAT_STUDIO_VELOCITY_RANGE, value))
+    def from_midi_velocity(cls: type[Self], velocity: MidiVelocity) -> Self:
+        return cls(MIDI_VELOCITY_RANGE.downscale(BEAT_STUDIO_VELOCITY_RANGE, velocity))
