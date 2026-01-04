@@ -20,31 +20,33 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-# pyright: reportAttributeAccessIssue=false
-# pyright: reportUnknownArgumentType=false
-# pyright: reportUnknownMemberType=false
-# pyright: reportUnknownVariableType=false
-
 from beat_studio_importer.ui import cprint, print_key_value
 from beat_studio_importer.user_error import UserError
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from colorama import Fore
 from contextlib import ExitStack, contextmanager
 from mido import MidiFile
+from mido.messages import BaseMessage
 from mido.ports import BaseOutput
 from pathlib import Path
+from typing import cast
 import mido
 
 
 @contextmanager
 def open_midi_port(name: str | None) -> Generator[BaseOutput, None, None]:
     if name is not None:
-        if name not in mido.get_output_names():
+        # autopep8: off
+        if name not in mido.get_output_names(): # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+        # autopep8: on
             raise UserError(f"Unknown MIDI port {name}")
 
     with ExitStack() as stack:
         try:
-            port = stack.enter_context(mido.open_output(name))
+            # autopep8: off
+            port = stack.enter_context(
+                cast(BaseOutput, mido.open_output(name))) # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            # autopep8: on
         except Exception as e:
             if type(e).__name__ != "SystemError":
                 raise
@@ -60,14 +62,18 @@ def open_midi_port(name: str | None) -> Generator[BaseOutput, None, None]:
 def do_play(path: Path, port_name: str | None = None, force_channel_10: bool = True) -> None:
     with open_midi_port(port_name) as port:
         print_key_value("File", path)
-        print_key_value("MIDI port", port.name)
+        print_key_value("MIDI port", cast(str, port.name))
 
         if force_channel_10:
             cprint(Fore.LIGHTBLUE_EX, "Will remap all notes to MIDI channel 10")
 
         file = MidiFile(path)
-        for message in file.play():
+        # autopep8: off
+        for message in cast(Iterable[BaseMessage], file.play()): # pyright: ignore[reportUnknownMemberType]
+        # autopep8: on
             if force_channel_10:
                 if hasattr(message, "channel"):
                     message.channel = 9
-            port.send(message)
+            # autopep8: off
+            port.send(message) # pyright: ignore[reportUnknownMemberType]
+            # autopep8: on
