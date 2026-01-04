@@ -91,32 +91,17 @@ class ImportArgs(Protocol):
 
 
 def do_import_args(args: ImportArgs) -> None:
-    note_name_map = None \
-        if args.note_name_path is None \
-        else MidiNoteNameMap.load(args.note_name_path)
-
-    channel = None \
-        if args.channel is None \
-        else MidiChannel(args.channel)
-
-    region_id = None \
-        if args.region is None \
-        else RegionId(args.region)
-
-    quantize = NoteValue.from_int(args.quantize)
-
-    override_tempo = None \
-        if args.override_tempo is None \
-        else BeatStudioTempo(args.override_tempo)
+    def wrap_optional[T, U](func: Callable[[T], U], obj: T | None) -> U | None:
+        return None if obj is None else func(obj)
 
     do_import(
         path=args.path,
-        note_name_map=note_name_map,
-        channel=channel,
-        region_id=region_id,
-        quantize=quantize,
+        note_name_map=wrap_optional(MidiNoteNameMap.load, args.note_name_path),
+        channel=wrap_optional(MidiChannel, args.channel),
+        region_id=wrap_optional(RegionId, args.region),
+        quantize=NoteValue.from_int(args.quantize),
         name=args.name,
-        override_tempo=override_tempo,
+        override_tempo=wrap_optional(BeatStudioTempo, args.override_tempo),
         repeat=args.repeat,
         add=args.add,
         args=summarize_args(args))
