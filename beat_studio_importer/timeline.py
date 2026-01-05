@@ -37,11 +37,13 @@ class Timeline:
 
     @classmethod
     def build(cls: type[Self], file: MidiFile, channel: MidiChannel | None = None) -> Self:
-        all_events: dict[Tick, list[Event]] = {}
+        events: list[tuple[Tick, list[Event]]] = []
+        slot_tick = Tick(0)
+        slot_events: list[Event] = []
 
-        tick = Tick(0)
+        tick = slot_tick
         for message in file.merged_track:  # yields messages with delta time
-            assert isinstance(message.time, int)
+            assert isinstance(message.time, int) and message.time >= 0
             tick = Tick(tick + message.time)
 
             event: Event | None = None
@@ -82,12 +84,15 @@ class Timeline:
                     ], f"unsupported message type {message.type}"
 
             if event is not None:
-                events = all_events.get(tick)
-                if events is None:
-                    events = []
-                    all_events[tick] = events
-                events.append(event)
+                if tick == slot_tick:
+                    slot_events.append(event)
+                else:
+                    if len(slot_events) > 0:
+                        events.append((slot_tick, slot_events))
+                    slot_tick = tick
+                    slot_events = [event]
 
-        return cls(
-            ticks_per_beat=file.ticks_per_beat,
-            events=sorted(all_events.items(), key=lambda p: p[0]))
+        if len(slot_events) > 0:
+            events.append((slot_tick, slot_events))
+
+        return cls(ticks_per_beat=file.ticks_per_beat, events=events)
