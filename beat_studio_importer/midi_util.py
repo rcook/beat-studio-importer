@@ -34,11 +34,8 @@ def summarize_midi_file(file: MidiFile) -> None:
     for track in file.tracks:
         for m in track:
             message_type = m.type
-            count = message_counts.get(message_type)
-            if count is None:
-                message_counts[message_type] = 1
-            else:
-                message_counts[message_type] += 1
+            message_counts[message_type] = \
+                message_counts.get(message_type, 0) + 1
             raw_channel = cast(int | None, getattr(m, "channel", None))
             if raw_channel is not None:
                 midi_channel = raw_channel + 1
