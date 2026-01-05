@@ -60,7 +60,8 @@ class Timeline:
                 case "set_tempo":
                     assert isinstance(message, MetaMessage)
                     event = TempoEvent(
-                        tick=tick, tempo=MidiTempo(message.tempo))
+                        tick=tick,
+                        tempo=MidiTempo(message.tempo))
                 case "time_signature":
                     assert isinstance(message, MetaMessage)
                     assert message.clocks_per_click == 24, f"unsupported clocks_per_click value {message.clocks_per_click}"
