@@ -266,3 +266,28 @@ SNARE     : ................................""")
         assert len(regions) == 1
         s = render_to_str(regions[0])
         assert s.strip() == expected.strip()
+
+    def test_tempo_time_signature_bug(self):
+        def summarize(region: Region) -> tuple[int, int, int, str, int]:
+            return region.start_tick, region.end_tick, region.tempo, str(region.time_signature), len(region.notes)
+
+        file = MidiFile(SAMPLES_DIR / "example-2.mid")
+        assert len(file.tracks) == 8
+        timeline = Timeline.build(file)
+        assert timeline.ticks_per_beat == 960
+        assert len(timeline.events) == 4032
+        regions = Region.build_all(timeline, discard_boundary_hits=True)
+        assert len(regions) == 13
+        assert summarize(regions[0]) == (0, 326400, 500000, "4/4", 2751)
+        assert summarize(regions[1]) == (326400, 339360, 500000, "9/8", 101)
+        assert summarize(regions[2]) == (339360, 342720, 500000, "7/8", 19)
+        assert summarize(regions[3]) == (342720, 355680, 500000, "9/8", 109)
+        assert summarize(regions[4]) == (355680, 360480, 500000, "5/4", 40)
+        assert summarize(regions[5]) == (360480, 373920, 500000, "7/8", 166)
+        assert summarize(regions[6]) == (373920, 389280, 500000, "4/4", 207)
+        assert summarize(regions[7]) == (389280, 404640, 500000, "4/4", 143)
+        assert summarize(regions[8]) == (404640, 458400, 500000, "7/4", 545)
+        assert summarize(regions[9]) == (458400, 519840, 500000, "4/4", 562)
+        assert summarize(regions[10]) == (519840, 619680, 500000, "4/4", 666)
+        assert summarize(regions[11]) == (619680, 646560, 500000, "7/4", 236)
+        assert summarize(regions[12]) == (646560, 669600, 500000, "4/4", 110)
