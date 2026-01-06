@@ -37,4 +37,14 @@ class BeatStudioVelocity(int):
 
     @classmethod
     def from_midi_velocity(cls: type[Self], velocity: MidiVelocity) -> Self:
-        return cls(MIDI_VELOCITY_RANGE.downscale(BEAT_STUDIO_VELOCITY_RANGE, velocity))
+        #  return cls(MIDI_VELOCITY_RANGE.downscale(BEAT_STUDIO_VELOCITY_RANGE, velocity))
+
+        # Beat Studio seems to explicitly reject MIDI velocity of 0 and
+        # treats this as a no-hit instead, so don't attempt to convert
+        # values outside this range
+        if not (1 <= velocity <= 127):
+            raise ValueError(
+                f"MIDI velocity {velocity} is outside range 1-127")
+
+        # It seems that Beat Studio downscales based on a ratio of 14:1
+        return cls(min((velocity - 1) // 14 + 1, 9))
