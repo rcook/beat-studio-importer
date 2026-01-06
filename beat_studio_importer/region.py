@@ -26,7 +26,7 @@ from beat_studio_importer.beat_studio_tempo import BeatStudioTempo
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.descriptor import Descriptor
 from beat_studio_importer.events import NoteEvent, TempoEvent, TimeSignatureEvent
-from beat_studio_importer.misc import Ppqn, RegionId, Tick
+from beat_studio_importer.misc import MidiNote, Ppqn, RegionId, Tick
 from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.quantize_util import quantize
@@ -37,7 +37,12 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from fractions import Fraction
 from functools import cached_property
+from logging import Logger
 from typing import Self, cast
+import logging
+
+
+LOGGER: Logger = logging.getLogger(__name__)
 
 
 DEFAULT_MIDI_TEMPO: MidiTempo = qpm_to_midi_tempo(Qpm(Fraction(120)))
@@ -119,6 +124,8 @@ class Region:
         return self.time_signature.pulse.midi_tempo_to_bpm(self.tempo)
 
     def render(self, name: str, note_name_map: MidiNoteNameMap, quantum: NoteValue, tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
+        ignored_notes: set[MidiNote] = set()
+
         tempo = tempo or BeatStudioTempo.from_midi_tempo(self.tempo)
 
         ticks_per_step = quantum.ticks(self.ppqn)
@@ -134,20 +141,33 @@ class Region:
             for member in BeatStudioNoteName
         }
 
+        is_empty = True
+
         for e in self.notes:
-            actual_tick = Tick(e.tick - self.start_tick)
-            quantized_tick = quantize(actual_tick, self.ppqn, quantum)
+            note_name = note_name_map.get(e.note)
+            if note_name is None:
+                if e.note not in ignored_notes:
+                    ignored_notes.add(e.note)
+                    if note_name_map.path is None:
+                        LOGGER.warning(
+                            f"MIDI note {e.note} ignored since it is not in default mapping")
+                    else:
+                        LOGGER.warning(
+                            f"MIDI note {e.note} ignored since it has no mapping in file {note_name_map.path}")
+                continue
+
+            # TBD: Combine the quantize and divmod calls into a
+            # single operation
+            quantized_tick = quantize(
+                Tick(e.tick - self.start_tick),
+                self.ppqn,
+                quantum)
             step, r = divmod(quantized_tick, ticks_per_step)
             assert r == 0
 
-            note_name = note_name_map.get(e.note)
-            if note_name is None:
-                if note_name_map.path is None:
-                    raise RuntimeError(
-                        f"MIDI note {e.note} is not in default mapping")
-                else:
-                    raise RuntimeError(
-                        f"MIDI note {e.note} has no mapping in file {note_name_map.path}")
+            # Ensure that quantization doesn't push the note
+            # beyond the end of the pattern
+            step = min(step, step_count - 1)
 
             hits = all_hits[note_name.beat_studio_note_name]
             velocity = BeatStudioVelocity.from_midi_velocity(e.velocity)
@@ -158,13 +178,16 @@ class Region:
                 for i in range(repeat):
                     hits[step + i * step_count] = velocity
 
+            is_empty = False
+
         return BeatStudioPattern(
             name=name,
             tempo=tempo,
             time_signature=self.time_signature,
             quantum=quantum,
             step_count=total_step_count,
-            hits=all_hits)
+            hits=all_hits,
+            is_empty=is_empty)
 
 
 @dataclass(frozen=False)

@@ -21,6 +21,7 @@
 #
 
 from argparse import _SubParsersAction, ArgumentParser, ArgumentTypeError, BooleanOptionalAction, Namespace
+from beat_studio_importer.arg_summary import ArgSummary
 from beat_studio_importer.beat_studio_tempo import BEAT_STUDIO_TEMPO_MAX, BEAT_STUDIO_TEMPO_MIN, BeatStudioTempo
 from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
 from beat_studio_importer.custom_formatter import CustomFormatter
@@ -51,26 +52,6 @@ LOG_LEVELS: list[str] = [
     "debug"
 ]
 DEFAULT_LOG_LEVEL: str = "warning"
-
-
-def summarize_args(args: object) -> list[tuple[str, str]]:
-    def render_value(value: object) -> str:
-        match value:
-            case bool() as x: return str(x).lower()
-            case _: return str(value)
-
-    attrs: list[tuple[str, str]] = []
-
-    for name in dir(args):
-        if name.startswith("_") or name in ["add", "handler"]:
-            continue
-        value = cast(object, getattr(args, name))
-        if value is None:
-            continue
-
-        attrs.append((name, render_value(value)))
-
-    return sorted(attrs, key=lambda p: p[0])
 
 
 @runtime_checkable
@@ -105,6 +86,9 @@ class ImportArgs(Protocol):
     @property
     def discard_boundary_hits(self) -> bool: ...
 
+    @property
+    def all(self) -> bool: ...
+
 
 def do_import_args(args: ImportArgs) -> None:
     def wrap_optional[T, U](func: Callable[[T], U], obj: T | None) -> U | None:
@@ -121,7 +105,8 @@ def do_import_args(args: ImportArgs) -> None:
         repeat=args.repeat,
         add=args.add,
         discard_boundary_hits=args.discard_boundary_hits,
-        args=summarize_args(args))
+        all=args.all,
+        args=ArgSummary.summarize(args))
 
 
 @runtime_checkable
@@ -320,6 +305,13 @@ def main(cwd: Path, argv: list[str]) -> None:
         action=BooleanOptionalAction,
         default=True,
         help="discard notes at the end of the last measure (default) or extend pattern by a whole measure to include event")
+    _ = p.add_argument(
+        "--all",
+        dest="all",
+        metavar="ALL",
+        action=BooleanOptionalAction,
+        default=False,
+        help="create a pattern for every region in the input file")
 
     p = add_parser(
         parsers,

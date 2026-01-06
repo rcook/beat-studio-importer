@@ -46,6 +46,7 @@ class BeatStudioPattern:
     quantum: NoteValue
     step_count: int
     hits: Hits
+    is_empty: bool
 
     @classmethod
     def load(cls: type[Self], path: Path) -> list[Self]:
@@ -134,16 +135,19 @@ class BeatStudioPattern:
 
         hits: Hits = {}
 
+        is_empty = True
+
         for line in lines:
             parts = line.split(":")
             if len(parts) != 2:
                 raise ValueError(f"Invalid pattern {line}: invalid format")
             note_name = BeatStudioNoteName.parse(parts[0].strip())
-            temp = parts[1].strip()
-            if len(temp) != step_count:
+            s = parts[1].strip()
+            if len(s) != step_count:
                 raise ValueError(f"Invalid pattern {line}: invalid step count")
 
-            hits[note_name] = [translate_hit_char(c) for c in temp]
+            hits[note_name] = [translate_hit_char(c) for c in s]
+            is_empty = is_empty and len(s.strip(".")) == 0
 
         return cls(
             name=name,
@@ -151,7 +155,8 @@ class BeatStudioPattern:
             time_signature=time_signature,
             quantum=quantum,
             step_count=step_count,
-            hits=hits)
+            hits=hits,
+            is_empty=is_empty)
 
     def print(self, file: "SupportsWrite[str] | None" = None) -> None:
         print(self._make_header(), file=file)
