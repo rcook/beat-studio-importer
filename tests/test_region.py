@@ -62,7 +62,7 @@ def render_to_lines(region: Region, quantize: NoteValue | None = None, print_tes
 
 class TestRegion:
     def test_basics(self) -> None:
-        file = MidiFile(SAMPLES_DIR / "reaper" / "smf-type-1.mid")
+        file = MidiFile(SAMPLES_DIR / "example-0.mid")
         assert len(file.tracks) == 2
 
         timeline = Timeline.build(file)
