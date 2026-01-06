@@ -26,12 +26,13 @@ from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.tempos import MidiTempo
 from beat_studio_importer.time_signature import Numerator, TimeSignature
 from dataclasses import dataclass
+from logging import Logger
 from mido import Message, MetaMessage, MidiFile
 from typing import Self
 import logging
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Logger = logging.getLogger(__name__)
 
 
 KNOWN_MESSAGE_TYPES: set[str] = {
