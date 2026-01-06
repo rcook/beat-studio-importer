@@ -23,6 +23,7 @@
 from argparse import _SubParsersAction, ArgumentParser, ArgumentTypeError, BooleanOptionalAction, Namespace
 from beat_studio_importer.beat_studio_tempo import BEAT_STUDIO_TEMPO_MAX, BEAT_STUDIO_TEMPO_MIN, BeatStudioTempo
 from beat_studio_importer.constants import PROGRAM_NAME, PROGRAM_URL
+from beat_studio_importer.custom_formatter import CustomFormatter
 from beat_studio_importer.import_command import do_import
 from beat_studio_importer.info_command import do_info
 from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
@@ -34,11 +35,22 @@ from beat_studio_importer.user_error import UserError
 from colorama import Fore, Style
 from pathlib import Path
 from typing import Callable, Protocol, cast, runtime_checkable
+import logging
 import sys
 
 
 type ArgsType = type
 type Func[T] = Callable[[T], None]
+
+
+LOG_LEVELS: list[str] = [
+    "critical",
+    "error",
+    "warning",
+    "info",
+    "debug"
+]
+DEFAULT_LOG_LEVEL: str = "warning"
 
 
 def summarize_args(args: object) -> list[tuple[str, str]]:
@@ -164,6 +176,18 @@ def resolve_path(cwd: Path, s: str) -> Path:
     return (cwd / Path(s).expanduser()).resolve()
 
 
+def add_log_level_arg(parser: ArgumentParser) -> None:
+    _ = parser.add_argument(
+        "--level",
+        "-l",
+        metavar="LEVEL",
+        dest="level",
+        type=str,
+        choices=LOG_LEVELS,
+        default=DEFAULT_LOG_LEVEL,
+        help=f"log level (one of: {', '.join(LOG_LEVELS)})")
+
+
 def add_path_arg(parser: ArgumentParser, cwd: Path, optional: bool = False) -> None:
     def resolved_path(s: str) -> Path:
         return resolve_path(cwd, s)
@@ -232,6 +256,7 @@ def main(cwd: Path, argv: list[str]) -> None:
         ImportArgs,  # type: ignore[type-abstract]
         do_import_args)
     add_path_arg(p, cwd)
+    add_log_level_arg(p)
     add_note_map_path_arg(p, cwd)
     _ = p.add_argument(
         "--channel",
@@ -303,6 +328,7 @@ def main(cwd: Path, argv: list[str]) -> None:
         InfoArgs,  # type: ignore[type-abstract]
         do_info_args)
     add_path_arg(p, cwd, optional=True)
+    add_log_level_arg(p)
     _ = p.add_argument(
         "--dump",
         dest="dump",
@@ -326,6 +352,7 @@ def main(cwd: Path, argv: list[str]) -> None:
         PlayArgs,  # type: ignore[type-abstract]
         do_play_args)
     add_path_arg(p, cwd)
+    add_log_level_arg(p)
     _ = p.add_argument(
         "--10",
         dest="force_channel_10",
@@ -350,8 +377,16 @@ def main(cwd: Path, argv: list[str]) -> None:
         do_remap_args)
     add_path_arg(p, cwd)
     add_output_path_arg(p, cwd)
+    add_log_level_arg(p)
 
     args = parser.parse_args(argv)
+
+    level_str = cast(str, args.level).upper()
+    level = logging.getLevelNamesMapping()[level_str]
+    handler = logging.StreamHandler()
+    handler.setFormatter(CustomFormatter())
+    logging.basicConfig(level=level, handlers=[handler])
+
     args_cls, func = cast(tuple[ArgsType, Func[Namespace]], args.handler)
     assert \
         isinstance(args, args_cls), \

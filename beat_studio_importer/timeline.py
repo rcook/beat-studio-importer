@@ -28,6 +28,25 @@ from beat_studio_importer.time_signature import Numerator, TimeSignature
 from dataclasses import dataclass
 from mido import Message, MetaMessage, MidiFile
 from typing import Self
+import logging
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+KNOWN_MESSAGE_TYPES: set[str] = {
+    "control_change",
+    "end_of_track",
+    "key_signature",
+    "marker",
+    "note_off",
+    "note_on",
+    "pitchwheel",
+    "program_change",
+    "set_tempo",
+    "time_signature",
+    "track_name"
+}
 
 
 @dataclass(frozen=True)
@@ -37,6 +56,8 @@ class Timeline:
 
     @classmethod
     def build(cls: type[Self], file: MidiFile, channel: MidiChannel | None = None) -> Self:
+        unknown_message_types: set[str] = set()
+
         events: list[tuple[Tick, list[Event]]] = []
         slot_tick = Tick(0)
         slot_events: list[Event] = []
@@ -72,19 +93,10 @@ class Timeline:
                             numerator=Numerator(message.numerator),
                             denominator=NoteValue.from_int(message.denominator)))
                 case _:
-                    assert message.type in [
-                        "control_change",
-                        "end_of_track",
-                        "key_signature",
-                        "marker",
-                        "note_off",
-                        "note_on",
-                        "pitchwheel",
-                        "program_change",
-                        "set_tempo",
-                        "time_signature",
-                        "track_name"
-                    ], f"unsupported message type {message.type}"
+                    if message.type not in KNOWN_MESSAGE_TYPES and message.type not in unknown_message_types:
+                        unknown_message_types.add(message.type)
+                        LOGGER.warning(
+                            f"Unknown MIDI message type \"{message.type}\"")
 
             if event is not None:
                 if tick == slot_tick:
