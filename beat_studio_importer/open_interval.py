@@ -52,4 +52,4 @@ class OpenInterval:
 
         scaled_value = ((value - self.min) / self_size) \
             * other_size + other.min
-        return int(round(scaled_value))
+        return round(scaled_value)
