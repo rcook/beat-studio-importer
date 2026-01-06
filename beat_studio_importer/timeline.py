@@ -21,7 +21,7 @@
 #
 
 from beat_studio_importer.events import Event, NoteEvent, TempoEvent, TimeSignatureEvent
-from beat_studio_importer.misc import MidiChannel, MidiNote, MidiVelocity, Tick
+from beat_studio_importer.misc import MidiChannel, MidiNote, MidiVelocity, Ppqn, Tick
 from beat_studio_importer.note_value import NoteValue
 from beat_studio_importer.tempos import MidiTempo
 from beat_studio_importer.time_signature import Numerator, TimeSignature
@@ -51,7 +51,7 @@ KNOWN_MESSAGE_TYPES: set[str] = {
 
 @dataclass(frozen=True)
 class Timeline:
-    ticks_per_beat: int
+    ppqn: Ppqn
     events: list[tuple[Tick, list[Event]]]
 
     @classmethod
@@ -110,4 +110,4 @@ class Timeline:
         if len(slot_events) > 0:
             events.append((slot_tick, slot_events))
 
-        return cls(ticks_per_beat=file.ticks_per_beat, events=events)
+        return cls(ppqn=Ppqn(file.ticks_per_beat), events=events)

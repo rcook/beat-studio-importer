@@ -88,7 +88,7 @@ class ImportArgs(Protocol):
     def region(self) -> int | None: ...
 
     @property
-    def quantize(self) -> int: ...
+    def quantum(self) -> int: ...
 
     @property
     def override_tempo(self) -> int | None: ...
@@ -115,7 +115,7 @@ def do_import_args(args: ImportArgs) -> None:
         note_name_map=wrap_optional(MidiNoteNameMap.load, args.note_name_path),
         channel=wrap_optional(MidiChannel, args.channel),
         region_id=wrap_optional(RegionId, args.region),
-        quantize=NoteValue.from_int(args.quantize),
+        quantum=NoteValue.from_int(args.quantum),
         name=args.name,
         override_tempo=wrap_optional(BeatStudioTempo, args.override_tempo),
         repeat=args.repeat,
@@ -276,14 +276,14 @@ def main(cwd: Path, argv: list[str]) -> None:
         default=None,
         help="region index")
     _ = p.add_argument(
-        "--quantize",
+        "--quantum",
         "-q",
-        dest="quantize",
-        metavar="QUANTIZE",
+        dest="quantum",
+        metavar="QUANTUM",
         type=int,
         choices=sorted(member.int_value for member in NoteValue),
         default=NoteValue.SIXTEENTH.int_value,
-        help="quantize step (4=quarter note, 8=eighth etc.)")
+        help="note value for quantization (4=quarter note, 8=eighth etc.)")
     _ = p.add_argument(
         "--name",
         dest="name",

@@ -43,7 +43,7 @@ class BeatStudioPattern:
     name: str
     tempo: BeatStudioTempo
     time_signature: TimeSignature
-    quantize: NoteValue
+    quantum: NoteValue
     step_count: int
     hits: Hits
 
@@ -118,7 +118,7 @@ class BeatStudioPattern:
 
         step_count = int(parts[0])
         tempo = BeatStudioTempo(int(parts[1]))
-        quantize = NoteValue.from_int(int(parts[2]))
+        quantum = NoteValue.from_int(int(parts[2]))
 
         if part_count > 3:
             parts = parts[3].split("/")
@@ -149,7 +149,7 @@ class BeatStudioPattern:
             name=name,
             tempo=tempo,
             time_signature=time_signature,
-            quantize=quantize,
+            quantum=quantum,
             step_count=step_count,
             hits=hits)
 
@@ -172,4 +172,4 @@ class BeatStudioPattern:
             raise ValueError(f"Invalid pattern name {self.name}")
 
         encoded_name = self.name.replace("\"", "\\\"")
-        return f"[\"{encoded_name}\" - {self.step_count} - {self.tempo} - {self.quantize.int_value} - {self.time_signature}]"
+        return f"[\"{encoded_name}\" - {self.step_count} - {self.tempo} - {self.quantum.int_value} - {self.time_signature}]"

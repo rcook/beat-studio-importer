@@ -20,31 +20,14 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from beat_studio_importer.tempos import Bpm, MidiTempo, midi_tempo_to_qpm
-from enum import Enum, auto, unique
-from fractions import Fraction
+from beat_studio_importer.misc import Ppqn, Tick
+from beat_studio_importer.note_value import NoteValue
 
 
-# https://music.stackexchange.com/questions/44197/how-to-convert-a-dotted-quarter-note-tempo-to-bpm
-@unique
-class Pulse(Enum):
-    SIXTY_FOURTH = auto(), Fraction(1, 16), "64th note"
-    THIRTY_SECOND = auto(), Fraction(1, 8), "32nd note"
-    SIXTEENTH = auto(), Fraction(1, 4), "16th note"
-    EIGHTH = auto(), Fraction(1, 2), "8th note"
-    DOTTED_EIGHTH = auto(), Fraction(3, 4), "dotted 8th note"
-    QUARTER = auto(), Fraction(1), "quarter note"
-    DOTTED_QUARTER = auto(), Fraction(3, 2), "dotted quarter note"
-    HALF = auto(), Fraction(2), "half-note"
-    WHOLE = auto(), Fraction(4), "whole note"
+def round_to_base(value: int | float, base: int) -> int:
+    return base * round(value / base)
 
-    # Tempo as beats (pulses) per minute
-    def midi_tempo_to_bpm(self, tempo: MidiTempo) -> Bpm:
-        qpm = midi_tempo_to_qpm(tempo)
-        return Bpm(qpm / self.multiplier)
 
-    @property
-    def multiplier(self) -> Fraction: return self.value[1]
-
-    @property
-    def display(self) -> str: return self.value[2]
+def quantize(tick: Tick, ppqn: Ppqn, quantum: NoteValue) -> Tick:
+    base = quantum.ticks(ppqn)
+    return Tick(round_to_base(tick, base))

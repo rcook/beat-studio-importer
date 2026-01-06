@@ -12,7 +12,7 @@ python \
     samples/example-1.mid \
     --channel 10 \
     --region 2 \
-    --quantize 16 \
+    --quantum 16 \
     --tempo 100 \
     --repeat 1 \
     --add

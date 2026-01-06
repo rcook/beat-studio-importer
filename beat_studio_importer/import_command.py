@@ -66,7 +66,7 @@ def do_import(
         note_name_map: MidiNoteNameMap | None,
         channel: MidiChannel | None,
         region_id: RegionId | None,
-        quantize: NoteValue, name: str | None,
+        quantum: NoteValue, name: str | None,
         override_tempo: BeatStudioTempo | None,
         repeat: int | None,
         discard_boundary_hits: bool,
@@ -102,7 +102,7 @@ def do_import(
     pattern = region.render(
         name,
         note_name_map,
-        quantize,
+        quantum,
         tempo=tempo,
         repeat=repeat)
 

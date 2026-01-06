@@ -26,9 +26,10 @@ from beat_studio_importer.beat_studio_tempo import BeatStudioTempo
 from beat_studio_importer.beat_studio_velocity import BeatStudioVelocity
 from beat_studio_importer.descriptor import Descriptor
 from beat_studio_importer.events import NoteEvent, TempoEvent, TimeSignatureEvent
-from beat_studio_importer.misc import RegionId, Tick
+from beat_studio_importer.misc import Ppqn, RegionId, Tick
 from beat_studio_importer.midi_note_name_map import MidiNoteNameMap
 from beat_studio_importer.note_value import NoteValue
+from beat_studio_importer.quantize_util import quantize
 from beat_studio_importer.tempos import Bpm, MidiTempo, Qpm, midi_tempo_to_qpm, qpm_to_midi_tempo
 from beat_studio_importer.time_signature import Numerator, TimeSignature
 from beat_studio_importer.timeline import Timeline
@@ -48,7 +49,7 @@ DEFAULT_TIME_SIGNATURE: TimeSignature = TimeSignature(
 @dataclass(frozen=True)
 class Region:
     id: RegionId
-    ticks_per_beat: int
+    ppqn: Ppqn  # ticks per beat, ppqn, tpqn etc.
     start_tick: Tick
     end_tick: Tick
     tempo: MidiTempo
@@ -117,11 +118,10 @@ class Region:
     def bpm(self) -> Bpm:
         return self.time_signature.pulse.midi_tempo_to_bpm(self.tempo)
 
-    def render(self, name: str, note_name_map: MidiNoteNameMap, quantize: NoteValue, tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
+    def render(self, name: str, note_name_map: MidiNoteNameMap, quantum: NoteValue, tempo: BeatStudioTempo | None = None, repeat: int | None = None) -> BeatStudioPattern:
         tempo = tempo or BeatStudioTempo.from_midi_tempo(self.tempo)
 
-        ticks_per_step, r = divmod(self.ticks_per_beat * 4, quantize.int_value)
-        assert r == 0
+        ticks_per_step = quantum.ticks(self.ppqn)
 
         tick_count = self.end_tick - self.start_tick
         step_count, r = divmod(tick_count, ticks_per_step)
@@ -135,7 +135,9 @@ class Region:
         }
 
         for e in self.notes:
-            step, r = divmod(e.tick - self.start_tick, ticks_per_step)
+            actual_tick = Tick(e.tick - self.start_tick)
+            quantized_tick = quantize(actual_tick, self.ppqn, quantum)
+            step, r = divmod(quantized_tick, ticks_per_step)
             assert r == 0
 
             note_name = note_name_map.get(e.note)
@@ -160,7 +162,7 @@ class Region:
             name=name,
             tempo=tempo,
             time_signature=self.time_signature,
-            quantize=quantize,
+            quantum=quantum,
             step_count=total_step_count,
             hits=all_hits)
 
@@ -200,7 +202,7 @@ class RegionBuildState[R: Region]:
             self.time_signature = self.time_signature_event.time_signature
 
         ticks_per_bar = self.time_signature.ticks_per_bar(
-            self.timeline.ticks_per_beat)
+            self.timeline.ppqn)
 
         # Handle note hit on boundary: note hit boundary belongs to the
         # next bar so we either discard the hit or extend the region by
@@ -228,7 +230,7 @@ class RegionBuildState[R: Region]:
         self.regions.append(
             self.region_cls(
                 id=RegionId(len(self.regions)+1),
-                ticks_per_beat=self.timeline.ticks_per_beat,
+                ppqn=self.timeline.ppqn,
                 start_tick=start_tick,
                 end_tick=adjusted_end_tick,
                 tempo=self.tempo,

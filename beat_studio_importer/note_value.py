@@ -20,6 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from beat_studio_importer.misc import Ppqn
 from beat_studio_importer.pulse import Pulse
 from enum import Enum, unique
 
@@ -31,6 +32,8 @@ class NoteValue(Enum):
     QUARTER = 4, Pulse.QUARTER
     EIGHTH = 8, Pulse.EIGHTH
     SIXTEENTH = 16, Pulse.SIXTEENTH
+    THIRTY_SECOND = 32, Pulse.THIRTY_SECOND
+    SIXTY_FOURTH = 64, Pulse.SIXTY_FOURTH
 
     @staticmethod
     def from_int(value: int) -> "NoteValue":
@@ -44,3 +47,8 @@ class NoteValue(Enum):
 
     @property
     def pulse(self) -> Pulse: return self.value[1]
+
+    def ticks(self, ppqn: Ppqn) -> int:
+        ticks, r = divmod(ppqn * 4, self.int_value)
+        assert r == 0
+        return ticks

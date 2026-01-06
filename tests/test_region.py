@@ -22,11 +22,11 @@
 
 from beat_studio_importer.midi_note_name_map import DEFAULT_MIDI_NOTE_NAME_MAP
 from beat_studio_importer.note_value import NoteValue
+from beat_studio_importer.region import Region
+from beat_studio_importer.timeline import Timeline
 from io import StringIO
 from mido import MidiFile
 from pathlib import Path
-from beat_studio_importer.region import Region
-from beat_studio_importer.timeline import Timeline
 from tests.util import is_close_tempo
 import pytest
 
@@ -34,18 +34,18 @@ import pytest
 SAMPLES_DIR: Path = Path(__file__).parent.parent / "samples"
 
 
-def render_to_str(region: Region, quantize: NoteValue | None = None) -> str:
+def render_to_str(region: Region, quantum: NoteValue | None = None) -> str:
     with StringIO() as f:
         pattern = region.render(
             "name",
             DEFAULT_MIDI_NOTE_NAME_MAP,
-            quantize or NoteValue.SIXTEENTH)
+            quantum or NoteValue.SIXTEENTH)
         pattern.print(file=f)
         return f.getvalue()
 
 
-def render_to_lines(region: Region, quantize: NoteValue | None = None, print_test_case: bool = False) -> list[str]:
-    s = render_to_str(region=region, quantize=quantize)
+def render_to_lines(region: Region, quantum: NoteValue | None = None, print_test_case: bool = False) -> list[str]:
+    s = render_to_str(region=region, quantum=quantum)
     lines = s.split("\n")
     if print_test_case:
         line_count = len(lines)
@@ -267,14 +267,14 @@ SNARE     : ................................""")
         s = render_to_str(regions[0])
         assert s.strip() == expected.strip()
 
-    def test_tempo_time_signature_bug(self):
+    def test_tempo_time_signature_bug(self) -> None:
         def summarize(region: Region) -> tuple[int, int, int, str, int]:
             return region.start_tick, region.end_tick, region.tempo, str(region.time_signature), len(region.notes)
 
         file = MidiFile(SAMPLES_DIR / "example-2.mid")
         assert len(file.tracks) == 8
         timeline = Timeline.build(file)
-        assert timeline.ticks_per_beat == 960
+        assert timeline.ppqn == 960
         assert len(timeline.events) == 4032
         regions = Region.build_all(timeline, discard_boundary_hits=True)
         assert len(regions) == 13
@@ -291,3 +291,59 @@ SNARE     : ................................""")
         assert summarize(regions[10]) == (519840, 619680, 500000, "4/4", 666)
         assert summarize(regions[11]) == (619680, 646560, 500000, "7/4", 236)
         assert summarize(regions[12]) == (646560, 669600, 500000, "4/4", 110)
+
+    def test_quantization(self) -> None:
+        file = MidiFile(SAMPLES_DIR / "example-3.mid")
+        assert len(file.tracks) == 2
+        timeline = Timeline.build(file)
+        assert timeline.ppqn == 960
+        assert len(timeline.events) == 13
+        regions = Region.build_all(timeline, discard_boundary_hits=True)
+        assert len(regions) == 1
+
+        # Note: this is what Beat Studio outputs
+        expected = """[\"name\" - 64 - 120 - 64 - 4/4]
+CRASH     : ................................................................
+CRASH2    : ................................................................
+HI-HAT    : 5.......6.......6.......5.......6.......5.......6.......6.......
+HI-TOM    : ................................................................
+KICK      : 9...............................9...............................
+LOW-TOM   : ................................................................
+MED-TOM   : ................................................................
+OPEN-HIHAT: ................................................................
+RIDE      : ................................................................
+SNARE     : ................9...............................9..............."""
+
+        # Quantize to 64ths
+        # TBD: This is what this script outputs
+        # The velocity mapping is slightly different
+        # This is close enough for now
+        expected = """[\"name\" - 64 - 120 - 64 - 4/4]
+CRASH     : ................................................................
+CRASH2    : ................................................................
+HI-HAT    : 5.......6.......5.......5.......6.......5.......6.......6.......
+HI-TOM    : ................................................................
+KICK      : 9...............................9...............................
+LOW-TOM   : ................................................................
+MED-TOM   : ................................................................
+OPEN-HIHAT: ................................................................
+RIDE      : ................................................................
+SNARE     : ................9...............................9..............."""
+        s = render_to_str(regions[0], quantum=NoteValue.SIXTY_FOURTH)
+        assert s.strip() == expected.strip()
+
+        # Quantize to 16ths
+        expected = """[\"name\" - 16 - 120 - 16 - 4/4]
+CRASH     : ................
+CRASH2    : ................
+HI-HAT    : 5.6.5.5.6.5.6.6.
+HI-TOM    : ................
+KICK      : 9.......9.......
+LOW-TOM   : ................
+MED-TOM   : ................
+OPEN-HIHAT: ................
+RIDE      : ................
+SNARE     : ....9.......9..."""
+        s = render_to_str(regions[0], quantum=NoteValue.SIXTEENTH)
+        print(s)
+        assert s.strip() == expected.strip()

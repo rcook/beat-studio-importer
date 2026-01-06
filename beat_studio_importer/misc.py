@@ -26,5 +26,6 @@ from typing import NewType
 MidiChannel = NewType("MidiChannel", int)
 MidiNote = NewType("MidiNote", int)
 MidiVelocity = NewType("MidiVelocity", int)
+Ppqn = NewType("Ppqn", int)
 RegionId = NewType("RegionId", int)
 Tick = NewType("Tick", int)
