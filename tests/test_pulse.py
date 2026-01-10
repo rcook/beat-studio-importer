@@ -22,6 +22,7 @@
 
 from beat_studio_importer.pulse import Pulse
 from beat_studio_importer.tempos import Bpm, MidiTempo
+from fractions import Fraction
 import pytest
 
 
@@ -33,3 +34,14 @@ class TestPulse:
     ])
     def test_basics(self, tempo: MidiTempo, pulse: Pulse, expected: Bpm) -> None:
         assert pulse.midi_tempo_to_bpm(tempo) == expected
+
+    @pytest.mark.parametrize("pulse, allow_fraction, expected", [
+        (Pulse.HALF, False, Pulse.DOTTED_HALF),
+        (Pulse.QUARTER, False, Pulse.DOTTED_QUARTER),
+        (Pulse.EIGHTH, False, Pulse.DOTTED_EIGHTH),
+        (Pulse.SIXTEENTH, False, Pulse.DOTTED_SIXTEENTH),
+        (Pulse.THIRTY_SECOND, False, Pulse.DOTTED_THIRTY_SECOND),
+        (Pulse.DOTTED_EIGHTH, True, Fraction(9, 8))
+    ])
+    def test_dotted(self, pulse: Pulse, allow_fraction: bool, expected: Pulse | Fraction) -> None:
+        assert pulse.dotted(allow_fraction=allow_fraction) == expected

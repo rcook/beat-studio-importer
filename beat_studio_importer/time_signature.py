@@ -49,10 +49,7 @@ class TimeSignature:
 
         is_compound_metre = self.numerator % 3 == 0
         if is_compound_metre:
-            match self.denominator:
-                case NoteValue.EIGHTH: return Pulse.DOTTED_QUARTER
-                case NoteValue.SIXTEENTH: return Pulse.DOTTED_EIGHTH
-                case _: raise NotImplementedError(f"Unimplemented time signature {self}")
+            return self.denominator.pulse.compound()
 
         # Complex metre
         return self.denominator.pulse

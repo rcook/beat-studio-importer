@@ -23,20 +23,55 @@
 from beat_studio_importer.tempos import Bpm, MidiTempo, midi_tempo_to_qpm
 from enum import Enum, auto, unique
 from fractions import Fraction
+from typing import Literal, overload
 
 
 # https://music.stackexchange.com/questions/44197/how-to-convert-a-dotted-quarter-note-tempo-to-bpm
 @unique
 class Pulse(Enum):
     SIXTY_FOURTH = auto(), Fraction(1, 16), "64th note"
+    DOTTED_SIXTY_FOURTH = auto(), Fraction(3, 32), "dotted 32nd note"
     THIRTY_SECOND = auto(), Fraction(1, 8), "32nd note"
+    DOTTED_THIRTY_SECOND = auto(), Fraction(3, 16), "dotted 32nd note"
     SIXTEENTH = auto(), Fraction(1, 4), "16th note"
+    DOTTED_SIXTEENTH = auto(), Fraction(3, 8), "dotted 16th note"
     EIGHTH = auto(), Fraction(1, 2), "8th note"
     DOTTED_EIGHTH = auto(), Fraction(3, 4), "dotted 8th note"
     QUARTER = auto(), Fraction(1), "quarter note"
     DOTTED_QUARTER = auto(), Fraction(3, 2), "dotted quarter note"
     HALF = auto(), Fraction(2), "half-note"
+    DOTTED_HALF = auto(), Fraction(3, 1), "dotted half-note"
     WHOLE = auto(), Fraction(4), "whole note"
+    DOTTED_WHOLE = auto(), Fraction(6, 1), "dotted whole note"
+
+    @overload
+    @staticmethod
+    def from_multiplier(value: Fraction) -> "Pulse":
+        ...
+
+    @overload
+    @staticmethod
+    def from_multiplier(value: Fraction, allow_fraction: Literal[False]) -> "Pulse":
+        ...
+
+    @overload
+    @staticmethod
+    def from_multiplier(value: Fraction, allow_fraction: Literal[True]) -> "Pulse | Fraction":
+        ...
+
+    @overload
+    @staticmethod
+    def from_multiplier(value: Fraction, allow_fraction: bool) -> "Pulse | Fraction":
+        ...
+
+    @staticmethod
+    def from_multiplier(value: Fraction, allow_fraction: bool = False) -> "Pulse | Fraction":
+        for member in Pulse:
+            if member.multiplier == value:
+                return member
+        if allow_fraction:
+            return value
+        raise NotImplementedError(f"Unsupported fraction {value}")
 
     # Tempo as beats (pulses) per minute
     def midi_tempo_to_bpm(self, tempo: MidiTempo) -> Bpm:
@@ -48,3 +83,41 @@ class Pulse(Enum):
 
     @property
     def display(self) -> str: return self.value[2]
+
+    @overload
+    def dotted(self) -> "Pulse":
+        ...
+
+    @overload
+    def dotted(self, allow_fraction: Literal[False]) -> "Pulse":
+        ...
+
+    @overload
+    def dotted(self, allow_fraction: Literal[True]) -> "Pulse | Fraction":
+        ...
+
+    @overload
+    def dotted(self, allow_fraction: bool) -> "Pulse | Fraction":
+        ...
+
+    def dotted(self, allow_fraction: bool = False) -> "Pulse | Fraction":
+        return self.__class__.from_multiplier(Fraction(3, 2) * self.multiplier, allow_fraction=allow_fraction)
+
+    @overload
+    def compound(self) -> "Pulse":
+        ...
+
+    @overload
+    def compound(self, allow_fraction: Literal[False]) -> "Pulse":
+        ...
+
+    @overload
+    def compound(self, allow_fraction: Literal[True]) -> "Pulse | Fraction":
+        ...
+
+    @overload
+    def compound(self, allow_fraction: bool) -> "Pulse | Fraction":
+        ...
+
+    def compound(self, allow_fraction: bool = False) -> "Pulse | Fraction":
+        return self.__class__.from_multiplier(Fraction(3, 1) * self.multiplier, allow_fraction=allow_fraction)
